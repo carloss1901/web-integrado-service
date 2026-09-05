@@ -9,37 +9,28 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.sql.Date;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "CLIENTE")
-public class ClienteEntity {
+@Table(name = "ESTADO_INCIDENCIA")
+public class EstadoIncidenciaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ID_CLIENTE")
-    private Integer idCliente;
+    @Column(name = "ID_ESTADO")
+    private Integer idEstado;
 
     @Column(name = "NOMBRE")
     private String nombre;
 
-    @Column(name = "COD_EXTERNO")
-    private String codExterno;
-
-    @Column(name = "DIRECCION")
-    private String direccion;
-
-    @Column(name = "CORREO_ELECTRONICO")
-    private String correoElectronico;
-
     @Column(name = "ACTIVO")
     private Boolean activo;
 
-    @Column(name = "FECHA_CREACION")
-    private Date fechaCreacion;
+    @Column(name = "FEC_REG", insertable = false, updatable = false)
+    private LocalDateTime fecReg;
 
-    @Column(name = "FECHA_MODIFICACION")
-    private Date fechaModificacion;
+    @Column(name = "FEC_MOD")
+    private LocalDateTime fecMod;
 }
