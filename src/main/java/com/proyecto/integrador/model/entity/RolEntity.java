@@ -25,6 +25,9 @@ public class RolEntity {
     @Column(name = "NOMBRE")
     private String nombre;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

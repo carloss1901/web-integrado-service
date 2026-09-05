@@ -15,6 +15,7 @@ public interface PrioridadRepository extends JpaRepository<PrioridadEntity, Inte
         SELECT *
         FROM PRIORIDAD
         WHERE :puntaje BETWEEN PUNTAJE_MINIMO AND PUNTAJE_MAXIMO
+        AND ACTIVO = TRUE
         ORDER BY NIVEL DESC
         LIMIT 1
         """, nativeQuery = true)

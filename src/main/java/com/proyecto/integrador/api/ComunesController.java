@@ -1,5 +1,6 @@
 package com.proyecto.integrador.api;
 
+import com.proyecto.integrador.model.request.comunes.MantenerMaestroRequest;
 import com.proyecto.integrador.model.response.MaestroResponse;
 import com.proyecto.integrador.service.ComunesService;
 import com.proyecto.integrador.util.Constantes;
@@ -12,8 +13,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -72,5 +79,32 @@ public class ComunesController {
     @Operation(summary = "Listar estados de incidencia", description = "Listar estados de incidencia")
     public List<MaestroResponse> listarEstadosIncidencia() {
         return comunesService.listarEstadosIncidencia();
+    }
+
+    @PostMapping(value = "{maestro}/registrar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Registrar maestro", description = "Registrar maestro")
+    public ResponseEntity<Object> registrarMaestro(
+        @PathVariable("maestro") String maestro,
+        @RequestBody MantenerMaestroRequest request
+    ) {
+        return comunesService.registrarMaestro(maestro, request);
+    }
+
+    @PutMapping(value = "{maestro}/actualizar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Actualizar maestro", description = "Actualizar maestro")
+    public ResponseEntity<Object> actualizarMaestro(
+        @PathVariable("maestro") String maestro,
+        @RequestBody MantenerMaestroRequest request
+    ) {
+        return comunesService.actualizarMaestro(maestro, request);
+    }
+
+    @DeleteMapping(value = "{maestro}/eliminar/{idMaestro}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Eliminar maestro", description = "Eliminar maestro de forma logica")
+    public ResponseEntity<Object> eliminarMaestro(
+        @PathVariable("maestro") String maestro,
+        @PathVariable("idMaestro") Integer idMaestro
+    ) {
+        return comunesService.eliminarMaestro(maestro, idMaestro);
     }
 }

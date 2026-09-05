@@ -34,6 +34,9 @@ public class PrioridadEntity {
     @Column(name = "PUNTAJE_MAXIMO")
     private Integer puntajeMaximo;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

@@ -43,6 +43,9 @@ public class IncidenciaHistorialEntity {
     @Column(name = "FECHA_EVENTO")
     private LocalDateTime fechaEvento;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

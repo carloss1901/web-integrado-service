@@ -31,6 +31,9 @@ public class UsuarioRolEntity {
     @Column(name = "ESTADO")
     private Boolean estado;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

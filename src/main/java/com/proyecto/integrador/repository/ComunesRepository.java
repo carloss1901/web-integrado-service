@@ -16,6 +16,7 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
             ID_ROL AS maestroId,
             NOMBRE AS descripcion
         FROM ROL
+        WHERE ACTIVO = TRUE
         ORDER BY NOMBRE
         """, nativeQuery = true)
     List<MaestroProjection> listarRoles();
@@ -25,6 +26,7 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
             ID_CATEGORIA AS maestroId,
             NOMBRE AS descripcion
         FROM CATEGORIA
+        WHERE ACTIVO = TRUE
         ORDER BY NOMBRE
         """, nativeQuery = true)
     List<MaestroProjection> listarCategorias();
@@ -34,6 +36,7 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
             ID_UBICACION AS maestroId,
             NOMBRE AS descripcion
         FROM UBICACION
+        WHERE ACTIVO = TRUE
         ORDER BY NOMBRE
         """, nativeQuery = true)
     List<MaestroProjection> listarUbicaciones();
@@ -43,6 +46,7 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
             ID_SEVERIDAD AS maestroId,
             NOMBRE AS descripcion
         FROM SEVERIDAD
+        WHERE ACTIVO = TRUE
         ORDER BY NIVEL
         """, nativeQuery = true)
     List<MaestroProjection> listarSeveridades();
@@ -52,6 +56,7 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
             ID_PRIORIDAD AS maestroId,
             NOMBRE AS descripcion
         FROM PRIORIDAD
+        WHERE ACTIVO = TRUE
         ORDER BY NIVEL
         """, nativeQuery = true)
     List<MaestroProjection> listarPrioridades();
@@ -61,6 +66,7 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
             ID_ESTADO AS maestroId,
             NOMBRE AS descripcion
         FROM ESTADO_INCIDENCIA
+        WHERE ACTIVO = TRUE
         ORDER BY ID_ESTADO
         """, nativeQuery = true)
     List<MaestroProjection> listarEstadosIncidencia();

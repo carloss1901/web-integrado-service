@@ -40,6 +40,9 @@ public class IncidenciaEvidenciaEntity {
     @Column(name = "FECHA_REGISTRO")
     private LocalDateTime fechaRegistro;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

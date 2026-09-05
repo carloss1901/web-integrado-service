@@ -9,6 +9,7 @@ import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.service.IncidenciaService;
 import com.proyecto.integrador.util.Constantes;
 import com.proyecto.integrador.util.ErrorGenerico;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -54,43 +55,43 @@ public class IncidenciaController {
 
     @PostMapping(value = "registrar", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registrar incidencia", description = "Registrar incidencia")
-    public ResponseEntity<Object> registrarIncidencia(@RequestBody RegistrarIncidenciaRequest request) {
+    public ResponseEntity<Object> registrarIncidencia(@Valid @RequestBody RegistrarIncidenciaRequest request) {
         return incidenciaService.registrarIncidencia(request);
     }
 
     @PostMapping(value = "clasificar", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Clasificar incidencia", description = "Clasificar incidencia")
-    public ResponseEntity<Object> clasificarIncidencia(@RequestBody ClasificarIncidenciaRequest request) {
+    public ResponseEntity<Object> clasificarIncidencia(@Valid @RequestBody ClasificarIncidenciaRequest request) {
         return incidenciaService.clasificarIncidencia(request);
     }
 
     @PostMapping(value = "asignar-responsable", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Asignar responsable", description = "Asignar responsable")
-    public ResponseEntity<Object> asignarResponsable(@RequestBody AsignarResponsableRequest request) {
+    public ResponseEntity<Object> asignarResponsable(@Valid @RequestBody AsignarResponsableRequest request) {
         return incidenciaService.asignarResponsable(request);
     }
 
     @PostMapping(value = "iniciar-atencion", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Iniciar atencion", description = "Iniciar atencion")
-    public ResponseEntity<Object> iniciarAtencion(@RequestBody ActualizarEstadoIncidenciaRequest request) {
+    public ResponseEntity<Object> iniciarAtencion(@Valid @RequestBody ActualizarEstadoIncidenciaRequest request) {
         return incidenciaService.iniciarAtencion(request);
     }
 
     @PostMapping(value = "resolver", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Resolver incidencia", description = "Resolver incidencia")
-    public ResponseEntity<Object> resolverIncidencia(@RequestBody ActualizarEstadoIncidenciaRequest request) {
+    public ResponseEntity<Object> resolverIncidencia(@Valid @RequestBody ActualizarEstadoIncidenciaRequest request) {
         return incidenciaService.resolverIncidencia(request);
     }
 
     @PostMapping(value = "cerrar", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Cerrar incidencia", description = "Cerrar incidencia")
-    public ResponseEntity<Object> cerrarIncidencia(@RequestBody ActualizarEstadoIncidenciaRequest request) {
+    public ResponseEntity<Object> cerrarIncidencia(@Valid @RequestBody ActualizarEstadoIncidenciaRequest request) {
         return incidenciaService.cerrarIncidencia(request);
     }
 
     @PostMapping(value = "evidencias", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registrar evidencia", description = "Registrar evidencia")
-    public ResponseEntity<Object> registrarEvidencia(@RequestBody RegistrarEvidenciaRequest request) {
+    public ResponseEntity<Object> registrarEvidencia(@Valid @RequestBody RegistrarEvidenciaRequest request) {
         return incidenciaService.registrarEvidencia(request);
     }
 }

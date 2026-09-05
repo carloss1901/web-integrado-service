@@ -81,6 +81,9 @@ public class IncidenciaEntity {
     @Column(name = "FECHA_CIERRE")
     private LocalDateTime fechaCierre;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

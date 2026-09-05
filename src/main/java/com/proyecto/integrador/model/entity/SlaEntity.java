@@ -28,6 +28,9 @@ public class SlaEntity {
     @Column(name = "MINUTOS_RESOLUCION")
     private Integer minutosResolucion;
 
+    @Column(name = "ACTIVO")
+    private Boolean activo;
+
     @Column(name = "FEC_REG", insertable = false, updatable = false)
     private LocalDateTime fecReg;
 

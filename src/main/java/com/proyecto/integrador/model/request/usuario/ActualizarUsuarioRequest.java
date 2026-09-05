@@ -10,9 +10,9 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RegistrarUsuarioRequest {
-    @NotBlank(message = "{message.required}")
-    private String usuario;
+public class ActualizarUsuarioRequest {
+    @NotNull(message = "{message.required}")
+    private Integer idUsuario;
 
     @NotBlank(message = "{message.required}")
     private String nombres;
@@ -23,9 +23,6 @@ public class RegistrarUsuarioRequest {
     @NotBlank(message = "{message.required}")
     @Email(message = "{message.email}")
     private String correo;
-
-    @NotBlank(message = "{message.required}")
-    private String password;
 
     @NotNull(message = "{message.required}")
     private List<Integer> idsRoles;

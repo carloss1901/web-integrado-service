@@ -112,12 +112,13 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         incidencia.setTitulo(request.getTitulo());
         incidencia.setDescripcion(request.getDescripcion());
         incidencia.setFechaRegistro(ahora);
+        incidencia.setActivo(Boolean.TRUE);
 
         incidenciaRepository.save(incidencia);
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdReportante(), "REGISTRO_INCIDENCIA",
             null, incidencia.getCodigo(), "Registro inicial de incidencia");
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia registrada correctamente", incidencia);
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia registrada correctamente");
     }
 
     @Override
@@ -143,7 +144,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         Integer puntaje = request.getImpacto() + request.getUrgencia() + request.getReincidencia();
         PrioridadEntity prioridad = prioridadRepository.findByPuntaje(puntaje)
             .orElseThrow(() -> new IllegalStateException("No existe prioridad configurada para el puntaje " + puntaje));
-        SlaEntity sla = slaRepository.findByIdSeveridad(request.getIdSeveridad())
+        SlaEntity sla = slaRepository.findActivoByIdSeveridad(request.getIdSeveridad())
             .orElseThrow(() -> new IllegalStateException("No existe SLA configurado para la severidad"));
 
         registrarCambioSiAplica(incidencia, request.getIdUsuario(), "CAMBIO_SEVERIDAD",
@@ -166,7 +167,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "CLASIFICACION",
             null, puntaje.toString(), "Incidencia clasificada y priorizada");
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia clasificada correctamente", incidencia);
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia clasificada correctamente");
     }
 
     @Override
@@ -193,7 +194,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "ASIGNACION_RESPONSABLE",
             valor(responsableAnterior), request.getIdResponsable().toString(), "Asignacion de responsable de atencion");
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Responsable asignado correctamente", incidencia);
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Responsable asignado correctamente");
     }
 
     @Override
@@ -231,7 +232,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "CIERRE",
             estadoAnterior, incidencia.getIdEstado().toString(), "Cierre definitivo de incidencia");
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia cerrada correctamente", incidencia);
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia cerrada correctamente");
     }
 
     @Override
@@ -252,12 +253,13 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         evidencia.setRutaArchivo(request.getRutaArchivo());
         evidencia.setDescripcion(request.getDescripcion());
         evidencia.setFechaRegistro(LocalDateTime.now());
+        evidencia.setActivo(Boolean.TRUE);
         incidenciaEvidenciaRepository.save(evidencia);
 
         registrarHistorial(request.getIdIncidencia(), request.getIdUsuario(), "REGISTRO_EVIDENCIA",
             null, request.getNombreArchivo(), "Registro de evidencia de incidencia");
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Evidencia registrada correctamente", evidencia);
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Evidencia registrada correctamente");
     }
 
     private ResponseEntity<Object> cambiarEstadoPorResponsable(
@@ -294,7 +296,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), tipoEvento,
             estadoAnterior, incidencia.getIdEstado().toString(), descripcion);
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, descripcion, incidencia);
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, descripcion);
     }
 
     private boolean tieneRol(Integer idUsuario, String nombreRol) {
@@ -309,7 +311,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     }
 
     private EstadoIncidenciaEntity obtenerEstado(String nombreEstado) {
-        return estadoIncidenciaRepository.findByNombreIgnoreCase(nombreEstado)
+        return estadoIncidenciaRepository.findByNombreActivo(nombreEstado)
             .orElseThrow(() -> new IllegalStateException("No existe el estado " + nombreEstado));
     }
 
@@ -323,6 +325,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         historial.setValorNuevo(valorNuevo);
         historial.setDescripcion(descripcion);
         historial.setFechaEvento(LocalDateTime.now());
+        historial.setActivo(Boolean.TRUE);
         incidenciaHistorialRepository.save(historial);
     }
 
