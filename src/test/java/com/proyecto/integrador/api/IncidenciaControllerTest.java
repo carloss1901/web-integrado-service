@@ -5,13 +5,18 @@ import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequ
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
+import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.service.IncidenciaService;
+import com.proyecto.integrador.util.CustomPage;
 import com.proyecto.integrador.util.MessageResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -142,6 +147,42 @@ class IncidenciaControllerTest {
             .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).clasificarIncidencia(any(ClasificarIncidenciaRequest.class));
+    }
+
+    @Test
+    void listarHistorialDebeResponderOk() throws Exception {
+        IncidenciaHistorialResponse response = new IncidenciaHistorialResponse();
+        response.setIdHistorial(1);
+        response.setTipoEvento("REGISTRO_INCIDENCIA");
+
+        CustomPage<IncidenciaHistorialResponse> page = new CustomPage<>(
+            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarHistorial(1, 1, 10)).thenReturn(page);
+
+        mockMvc.perform(get("/incidencias/1/historial"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+            .andExpect(jsonPath("$.data[0].tipoEvento").value("REGISTRO_INCIDENCIA"));
+
+        verify(incidenciaService).listarHistorial(1, 1, 10);
+    }
+
+    @Test
+    void listarEvidenciasDebeResponderOk() throws Exception {
+        IncidenciaEvidenciaResponse response = new IncidenciaEvidenciaResponse();
+        response.setIdEvidencia(1);
+        response.setNombreArchivo("captura.png");
+
+        CustomPage<IncidenciaEvidenciaResponse> page = new CustomPage<>(
+            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarEvidencias(1, 1, 10)).thenReturn(page);
+
+        mockMvc.perform(get("/incidencias/1/evidencias"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+            .andExpect(jsonPath("$.data[0].nombreArchivo").value("captura.png"));
+
+        verify(incidenciaService).listarEvidencias(1, 1, 10);
     }
 
     @Test

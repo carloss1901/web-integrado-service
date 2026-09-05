@@ -70,4 +70,15 @@ public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
         ORDER BY ID_ESTADO
         """, nativeQuery = true)
     List<MaestroProjection> listarEstadosIncidencia();
+
+    @Query(value = """
+        SELECT
+            S.ID_SLA AS maestroId,
+            CONCAT(SEV.NOMBRE, ' - ', S.MINUTOS_RESOLUCION, ' min') AS descripcion
+        FROM SLA S
+        INNER JOIN SEVERIDAD SEV ON SEV.ID_SEVERIDAD = S.ID_SEVERIDAD
+        WHERE S.ACTIVO = TRUE
+        ORDER BY S.ID_SLA
+        """, nativeQuery = true)
+    List<MaestroProjection> listarSla();
 }

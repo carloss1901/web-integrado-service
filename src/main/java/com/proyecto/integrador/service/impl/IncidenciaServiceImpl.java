@@ -13,6 +13,8 @@ import com.proyecto.integrador.model.request.incidencia.AsignarResponsableReques
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
+import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.repository.CategoriaRepository;
 import com.proyecto.integrador.repository.EstadoIncidenciaRepository;
@@ -24,9 +26,16 @@ import com.proyecto.integrador.repository.SeveridadRepository;
 import com.proyecto.integrador.repository.SlaRepository;
 import com.proyecto.integrador.repository.UbicacionRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
+import com.proyecto.integrador.model.projection.IncidenciaEvidenciaProjection;
+import com.proyecto.integrador.model.projection.IncidenciaHistorialProjection;
 import com.proyecto.integrador.service.IncidenciaService;
+import com.proyecto.integrador.util.CustomPage;
 import com.proyecto.integrador.util.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -310,6 +319,26 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             null, request.getNombreArchivo(), "Registro de evidencia de incidencia");
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Evidencia registrada correctamente");
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaHistorialResponse> listarHistorial(Integer idIncidencia, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<IncidenciaHistorialProjection> result = incidenciaHistorialRepository.listarHistorial(idIncidencia, pageable);
+        List<IncidenciaHistorialResponse> content = genericMapper.toResponseList(result.getContent(),
+            IncidenciaHistorialResponse.class);
+        return new CustomPage<>(new PageImpl<>(content, pageable, result.getTotalElements()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(Integer idIncidencia, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<IncidenciaEvidenciaProjection> result = incidenciaEvidenciaRepository.listarEvidencias(idIncidencia, pageable);
+        List<IncidenciaEvidenciaResponse> content = genericMapper.toResponseList(result.getContent(),
+            IncidenciaEvidenciaResponse.class);
+        return new CustomPage<>(new PageImpl<>(content, pageable, result.getTotalElements()));
     }
 
     private ResponseEntity<Object> cambiarEstadoPorResponsable(

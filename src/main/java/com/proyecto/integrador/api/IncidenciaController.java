@@ -6,11 +6,15 @@ import com.proyecto.integrador.model.request.incidencia.AsignarResponsableReques
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
+import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.service.IncidenciaService;
 import com.proyecto.integrador.util.Constantes;
+import com.proyecto.integrador.util.CustomPage;
 import com.proyecto.integrador.util.ErrorGenerico;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -115,5 +120,29 @@ public class IncidenciaController {
     @Operation(summary = "Registrar evidencia", description = "Registrar evidencia")
     public ResponseEntity<Object> registrarEvidencia(@Valid @RequestBody RegistrarEvidenciaRequest request) {
         return incidenciaService.registrarEvidencia(request);
+    }
+
+    @GetMapping(value = "{idIncidencia}/historial", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar historial", description = "Listar historial de una incidencia")
+    public CustomPage<IncidenciaHistorialResponse> listarHistorial(
+        @PathVariable("idIncidencia") Integer idIncidencia,
+        @Min(value = 1, message = "{message.minOne}")
+        @RequestParam(value = "page", defaultValue = "1") Integer page,
+        @Min(value = 1, message = "{message.minOne}")
+        @RequestParam(value = "size", defaultValue = "10") Integer size
+    ) {
+        return incidenciaService.listarHistorial(idIncidencia, page, size);
+    }
+
+    @GetMapping(value = "{idIncidencia}/evidencias", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar evidencias", description = "Listar evidencias de una incidencia")
+    public CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(
+        @PathVariable("idIncidencia") Integer idIncidencia,
+        @Min(value = 1, message = "{message.minOne}")
+        @RequestParam(value = "page", defaultValue = "1") Integer page,
+        @Min(value = 1, message = "{message.minOne}")
+        @RequestParam(value = "size", defaultValue = "10") Integer size
+    ) {
+        return incidenciaService.listarEvidencias(idIncidencia, page, size);
     }
 }

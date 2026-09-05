@@ -97,6 +97,12 @@ public class ComunesServiceImpl implements ComunesService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<MaestroResponse> listarSla() {
+        return genericMapper.toResponseList(comunesRepository.listarSla(), MaestroResponse.class);
+    }
+
+    @Override
     @Transactional
     public ResponseEntity<Object> registrarMaestro(TipoMaestro maestro, MantenerMaestroRequest request) {
         try {

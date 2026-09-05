@@ -55,6 +55,21 @@ class ComunesControllerTest {
     }
 
     @Test
+    void listarSlaDebeResponderOk() throws Exception {
+        MaestroResponse response = new MaestroResponse();
+        response.setMaestroId(4);
+        response.setDescripcion("CRITICA - 120 min");
+
+        when(comunesService.listarSla()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/comunes/sla"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].maestroId").value(4));
+
+        verify(comunesService).listarSla();
+    }
+
+    @Test
     void registrarMaestroDebeResponderOk() throws Exception {
         MantenerMaestroRequest request = new MantenerMaestroRequest();
         request.setDescripcion("BASE_DATOS");

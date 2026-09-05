@@ -14,6 +14,7 @@ public interface ComunesService {
     List<MaestroResponse> listarSeveridades();
     List<MaestroResponse> listarPrioridades();
     List<MaestroResponse> listarEstadosIncidencia();
+    List<MaestroResponse> listarSla();
     ResponseEntity<Object> registrarMaestro(TipoMaestro maestro, MantenerMaestroRequest request);
     ResponseEntity<Object> actualizarMaestro(TipoMaestro maestro, MantenerMaestroRequest request);
     ResponseEntity<Object> eliminarMaestro(TipoMaestro maestro, Integer idMaestro);

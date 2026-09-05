@@ -6,7 +6,10 @@ import com.proyecto.integrador.model.request.incidencia.AsignarResponsableReques
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
+import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
+import com.proyecto.integrador.util.CustomPage;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -23,4 +26,6 @@ public interface IncidenciaService {
     ResponseEntity<Object> resolverIncidencia(ActualizarEstadoIncidenciaRequest request);
     ResponseEntity<Object> cerrarIncidencia(ActualizarEstadoIncidenciaRequest request);
     ResponseEntity<Object> registrarEvidencia(RegistrarEvidenciaRequest request);
+    CustomPage<IncidenciaHistorialResponse> listarHistorial(Integer idIncidencia, Integer page, Integer size);
+    CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(Integer idIncidencia, Integer page, Integer size);
 }

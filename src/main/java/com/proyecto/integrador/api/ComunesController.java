@@ -85,6 +85,12 @@ public class ComunesController {
         return comunesService.listarEstadosIncidencia();
     }
 
+    @GetMapping(value = "sla", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Listar SLA", description = "Listar SLA configurados por severidad")
+    public List<MaestroResponse> listarSla() {
+        return comunesService.listarSla();
+    }
+
     @PostMapping(value = "{maestro}/registrar", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registrar maestro", description = "Registrar maestro")
     public ResponseEntity<Object> registrarMaestro(
