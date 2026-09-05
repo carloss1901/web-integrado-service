@@ -1,6 +1,7 @@
 package com.proyecto.integrador.service.impl;
 
 import com.proyecto.integrador.mapper.GenericMapper;
+import com.proyecto.integrador.model.enums.TipoMaestro;
 import com.proyecto.integrador.model.entity.CategoriaEntity;
 import com.proyecto.integrador.model.entity.EstadoIncidenciaEntity;
 import com.proyecto.integrador.model.entity.PrioridadEntity;
@@ -97,19 +98,16 @@ public class ComunesServiceImpl implements ComunesService {
 
     @Override
     @Transactional
-    public ResponseEntity<Object> registrarMaestro(String maestro, MantenerMaestroRequest request) {
+    public ResponseEntity<Object> registrarMaestro(TipoMaestro maestro, MantenerMaestroRequest request) {
         try {
-            switch (normalizar(maestro)) {
-                case "roles" -> registrarRol(request);
-                case "categorias" -> registrarCategoria(request);
-                case "ubicaciones" -> registrarUbicacion(request);
-                case "severidades" -> registrarSeveridad(request);
-                case "prioridades" -> registrarPrioridad(request);
-                case "estados-incidencia" -> registrarEstadoIncidencia(request);
-                case "sla" -> registrarSla(request);
-                default -> {
-                    return error("Maestro no soportado");
-                }
+            switch (maestro) {
+                case ROLES -> registrarRol(request);
+                case CATEGORIAS -> registrarCategoria(request);
+                case UBICACIONES -> registrarUbicacion(request);
+                case SEVERIDADES -> registrarSeveridad(request);
+                case PRIORIDADES -> registrarPrioridad(request);
+                case ESTADOS_INCIDENCIA -> registrarEstadoIncidencia(request);
+                case SLA -> registrarSla(request);
             }
         } catch (IllegalArgumentException ex) {
             return error(ex.getMessage());
@@ -119,23 +117,20 @@ public class ComunesServiceImpl implements ComunesService {
 
     @Override
     @Transactional
-    public ResponseEntity<Object> actualizarMaestro(String maestro, MantenerMaestroRequest request) {
+    public ResponseEntity<Object> actualizarMaestro(TipoMaestro maestro, MantenerMaestroRequest request) {
         if (request.getIdMaestro() == null) {
             return error("El idMaestro es obligatorio");
         }
 
         try {
-            switch (normalizar(maestro)) {
-                case "roles" -> actualizarRol(request);
-                case "categorias" -> actualizarCategoria(request);
-                case "ubicaciones" -> actualizarUbicacion(request);
-                case "severidades" -> actualizarSeveridad(request);
-                case "prioridades" -> actualizarPrioridad(request);
-                case "estados-incidencia" -> actualizarEstadoIncidencia(request);
-                case "sla" -> actualizarSla(request);
-                default -> {
-                    return error("Maestro no soportado");
-                }
+            switch (maestro) {
+                case ROLES -> actualizarRol(request);
+                case CATEGORIAS -> actualizarCategoria(request);
+                case UBICACIONES -> actualizarUbicacion(request);
+                case SEVERIDADES -> actualizarSeveridad(request);
+                case PRIORIDADES -> actualizarPrioridad(request);
+                case ESTADOS_INCIDENCIA -> actualizarEstadoIncidencia(request);
+                case SLA -> actualizarSla(request);
             }
         } catch (IllegalArgumentException ex) {
             return error(ex.getMessage());
@@ -145,23 +140,20 @@ public class ComunesServiceImpl implements ComunesService {
 
     @Override
     @Transactional
-    public ResponseEntity<Object> eliminarMaestro(String maestro, Integer idMaestro) {
+    public ResponseEntity<Object> eliminarMaestro(TipoMaestro maestro, Integer idMaestro) {
         if (idMaestro == null) {
             return error("El idMaestro es obligatorio");
         }
 
         try {
-            switch (normalizar(maestro)) {
-                case "roles" -> eliminarRol(idMaestro);
-                case "categorias" -> eliminarCategoria(idMaestro);
-                case "ubicaciones" -> eliminarUbicacion(idMaestro);
-                case "severidades" -> eliminarSeveridad(idMaestro);
-                case "prioridades" -> eliminarPrioridad(idMaestro);
-                case "estados-incidencia" -> eliminarEstadoIncidencia(idMaestro);
-                case "sla" -> eliminarSla(idMaestro);
-                default -> {
-                    return error("Maestro no soportado");
-                }
+            switch (maestro) {
+                case ROLES -> eliminarRol(idMaestro);
+                case CATEGORIAS -> eliminarCategoria(idMaestro);
+                case UBICACIONES -> eliminarUbicacion(idMaestro);
+                case SEVERIDADES -> eliminarSeveridad(idMaestro);
+                case PRIORIDADES -> eliminarPrioridad(idMaestro);
+                case ESTADOS_INCIDENCIA -> eliminarEstadoIncidencia(idMaestro);
+                case SLA -> eliminarSla(idMaestro);
             }
         } catch (IllegalArgumentException ex) {
             return error(ex.getMessage());
@@ -382,10 +374,6 @@ public class ComunesServiceImpl implements ComunesService {
         if (value == null) {
             throw new IllegalArgumentException(message);
         }
-    }
-
-    private String normalizar(String maestro) {
-        return maestro == null ? "" : maestro.trim().toLowerCase();
     }
 
     private ResponseEntity<Object> error(String mensaje) {

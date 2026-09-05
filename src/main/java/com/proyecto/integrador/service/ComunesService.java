@@ -1,5 +1,6 @@
 package com.proyecto.integrador.service;
 
+import com.proyecto.integrador.model.enums.TipoMaestro;
 import com.proyecto.integrador.model.response.MaestroResponse;
 import com.proyecto.integrador.model.request.comunes.MantenerMaestroRequest;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,7 @@ public interface ComunesService {
     List<MaestroResponse> listarSeveridades();
     List<MaestroResponse> listarPrioridades();
     List<MaestroResponse> listarEstadosIncidencia();
-    ResponseEntity<Object> registrarMaestro(String maestro, MantenerMaestroRequest request);
-    ResponseEntity<Object> actualizarMaestro(String maestro, MantenerMaestroRequest request);
-    ResponseEntity<Object> eliminarMaestro(String maestro, Integer idMaestro);
+    ResponseEntity<Object> registrarMaestro(TipoMaestro maestro, MantenerMaestroRequest request);
+    ResponseEntity<Object> actualizarMaestro(TipoMaestro maestro, MantenerMaestroRequest request);
+    ResponseEntity<Object> eliminarMaestro(TipoMaestro maestro, Integer idMaestro);
 }

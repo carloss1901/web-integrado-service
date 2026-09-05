@@ -1,6 +1,7 @@
 package com.proyecto.integrador.service;
 
 import com.proyecto.integrador.model.entity.CategoriaEntity;
+import com.proyecto.integrador.model.enums.TipoMaestro;
 import com.proyecto.integrador.model.request.comunes.MantenerMaestroRequest;
 import com.proyecto.integrador.repository.CategoriaRepository;
 import com.proyecto.integrador.service.impl.ComunesServiceImpl;
@@ -33,7 +34,7 @@ class ComunesServiceImplTest {
         request.setDescripcion("BASE_DATOS");
         request.setDetalle("Incidencias de base de datos");
 
-        ResponseEntity<Object> response = comunesService.registrarMaestro("categorias", request);
+        ResponseEntity<Object> response = comunesService.registrarMaestro(TipoMaestro.CATEGORIAS, request);
 
         assertEquals(200, response.getStatusCode().value());
         verify(categoriaRepository).save(any(CategoriaEntity.class));
@@ -47,7 +48,7 @@ class ComunesServiceImplTest {
 
         when(categoriaRepository.findById(1)).thenReturn(Optional.of(categoria));
 
-        ResponseEntity<Object> response = comunesService.eliminarMaestro("categorias", 1);
+        ResponseEntity<Object> response = comunesService.eliminarMaestro(TipoMaestro.CATEGORIAS, 1);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(Boolean.FALSE, categoria.getActivo());

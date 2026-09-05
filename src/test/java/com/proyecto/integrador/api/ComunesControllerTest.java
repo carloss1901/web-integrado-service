@@ -1,6 +1,7 @@
 package com.proyecto.integrador.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.proyecto.integrador.model.enums.TipoMaestro;
 import com.proyecto.integrador.model.request.comunes.MantenerMaestroRequest;
 import com.proyecto.integrador.model.response.MaestroResponse;
 import com.proyecto.integrador.service.ComunesService;
@@ -58,7 +59,7 @@ class ComunesControllerTest {
         MantenerMaestroRequest request = new MantenerMaestroRequest();
         request.setDescripcion("BASE_DATOS");
 
-        when(comunesService.registrarMaestro(eq("categorias"), any(MantenerMaestroRequest.class)))
+        when(comunesService.registrarMaestro(eq(TipoMaestro.CATEGORIAS), any(MantenerMaestroRequest.class)))
             .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Registro creado correctamente"));
 
         mockMvc.perform(post("/comunes/categorias/registrar")
@@ -67,7 +68,7 @@ class ComunesControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
 
-        verify(comunesService).registrarMaestro(eq("categorias"), any(MantenerMaestroRequest.class));
+        verify(comunesService).registrarMaestro(eq(TipoMaestro.CATEGORIAS), any(MantenerMaestroRequest.class));
     }
 
     @Test
@@ -76,7 +77,7 @@ class ComunesControllerTest {
         request.setIdMaestro(1);
         request.setDescripcion("BASE_DATOS");
 
-        when(comunesService.actualizarMaestro(eq("categorias"), any(MantenerMaestroRequest.class)))
+        when(comunesService.actualizarMaestro(eq(TipoMaestro.CATEGORIAS), any(MantenerMaestroRequest.class)))
             .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Registro actualizado correctamente"));
 
         mockMvc.perform(put("/comunes/categorias/actualizar")
@@ -85,18 +86,18 @@ class ComunesControllerTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
 
-        verify(comunesService).actualizarMaestro(eq("categorias"), any(MantenerMaestroRequest.class));
+        verify(comunesService).actualizarMaestro(eq(TipoMaestro.CATEGORIAS), any(MantenerMaestroRequest.class));
     }
 
     @Test
     void eliminarMaestroDebeResponderOk() throws Exception {
-        when(comunesService.eliminarMaestro("categorias", 1))
+        when(comunesService.eliminarMaestro(TipoMaestro.CATEGORIAS, 1))
             .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Registro eliminado correctamente"));
 
         mockMvc.perform(delete("/comunes/categorias/eliminar/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
 
-        verify(comunesService).eliminarMaestro("categorias", 1);
+        verify(comunesService).eliminarMaestro(TipoMaestro.CATEGORIAS, 1);
     }
 }
