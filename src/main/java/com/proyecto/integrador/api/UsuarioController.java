@@ -122,7 +122,7 @@ public class UsuarioController {
         return usuarioService.actualizarUsuario(request);
     }
 
-    @DeleteMapping(value = "{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "eliminar/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Eliminar usuario", description = "Eliminar usuario de forma logica", responses = {
         @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
             content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,

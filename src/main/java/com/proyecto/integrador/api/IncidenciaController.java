@@ -1,6 +1,7 @@
 package com.proyecto.integrador.api;
 
 import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
@@ -21,7 +22,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -53,10 +57,28 @@ public class IncidenciaController {
         return incidenciaService.listarIncidencias();
     }
 
+    @GetMapping(value = "{idIncidencia}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Obtener incidencia", description = "Obtener incidencia")
+    public ResponseEntity<Object> obtenerIncidencia(@PathVariable("idIncidencia") Integer idIncidencia) {
+        return incidenciaService.obtenerIncidencia(idIncidencia);
+    }
+
     @PostMapping(value = "registrar", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registrar incidencia", description = "Registrar incidencia")
     public ResponseEntity<Object> registrarIncidencia(@Valid @RequestBody RegistrarIncidenciaRequest request) {
         return incidenciaService.registrarIncidencia(request);
+    }
+
+    @PutMapping(value = "actualizar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Actualizar incidencia", description = "Actualizar incidencia")
+    public ResponseEntity<Object> actualizarIncidencia(@Valid @RequestBody ActualizarIncidenciaRequest request) {
+        return incidenciaService.actualizarIncidencia(request);
+    }
+
+    @DeleteMapping(value = "eliminar/{idIncidencia}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Eliminar incidencia", description = "Eliminar incidencia")
+    public ResponseEntity<Object> eliminarIncidencia(@PathVariable("idIncidencia") Integer idIncidencia) {
+        return incidenciaService.eliminarIncidencia(idIncidencia);
     }
 
     @PostMapping(value = "clasificar", produces = MediaType.APPLICATION_JSON_VALUE)

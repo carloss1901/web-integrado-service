@@ -8,6 +8,7 @@ import com.proyecto.integrador.model.entity.IncidenciaHistorialEntity;
 import com.proyecto.integrador.model.entity.PrioridadEntity;
 import com.proyecto.integrador.model.entity.SlaEntity;
 import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
@@ -90,6 +91,15 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ResponseEntity<Object> obtenerIncidencia(Integer idIncidencia) {
+        return incidenciaRepository.obtenerIncidencia(idIncidencia)
+            .map(projection -> MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Proceso exitoso",
+                genericMapper.toResponse(projection, IncidenciaResponse.class)))
+            .orElseGet(() -> errorNotFound("La incidencia no existe"));
+    }
+
+    @Override
     @Transactional
     public ResponseEntity<Object> registrarIncidencia(RegistrarIncidenciaRequest request) {
         if (!tieneRol(request.getIdReportante(), ROL_REPORTANTE)) {
@@ -123,6 +133,46 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional
+    public ResponseEntity<Object> actualizarIncidencia(ActualizarIncidenciaRequest request) {
+        if (!categoriaRepository.existsById(request.getIdCategoria())) {
+            return error("La categoria no existe");
+        }
+        if (!ubicacionRepository.existsById(request.getIdUbicacion())) {
+            return error("La ubicacion no existe");
+        }
+
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+
+        incidencia.setIdCategoria(request.getIdCategoria());
+        incidencia.setIdUbicacion(request.getIdUbicacion());
+        incidencia.setTitulo(request.getTitulo());
+        incidencia.setDescripcion(request.getDescripcion());
+        incidencia.setFecMod(LocalDateTime.now());
+        incidenciaRepository.save(incidencia);
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia actualizada correctamente");
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> eliminarIncidencia(Integer idIncidencia) {
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(idIncidencia);
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+
+        incidencia.setActivo(Boolean.FALSE);
+        incidencia.setFecMod(LocalDateTime.now());
+        incidenciaRepository.save(incidencia);
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia eliminada correctamente");
+    }
+
+    @Override
+    @Transactional
     public ResponseEntity<Object> clasificarIncidencia(ClasificarIncidenciaRequest request) {
         if (!tieneRol(request.getIdUsuario(), ROL_OPERADOR)) {
             return error("El usuario no tiene rol OPERADOR_MESA_CONTROL");
@@ -136,7 +186,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             return error("Impacto, urgencia o reincidencia tienen valores invalidos");
         }
 
-        IncidenciaEntity incidencia = obtenerIncidencia(request.getIdIncidencia());
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
@@ -180,7 +230,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             return error("El usuario asignado no tiene rol RESPONSABLE_ATENCION");
         }
 
-        IncidenciaEntity incidencia = obtenerIncidencia(request.getIdIncidencia());
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
@@ -218,7 +268,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             return error("El usuario no tiene rol autorizado para cerrar incidencias");
         }
 
-        IncidenciaEntity incidencia = obtenerIncidencia(request.getIdIncidencia());
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
@@ -238,7 +288,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Override
     @Transactional
     public ResponseEntity<Object> registrarEvidencia(RegistrarEvidenciaRequest request) {
-        IncidenciaEntity incidencia = obtenerIncidencia(request.getIdIncidencia());
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
@@ -274,7 +324,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             return error("El usuario no tiene rol RESPONSABLE_ATENCION");
         }
 
-        IncidenciaEntity incidencia = obtenerIncidencia(request.getIdIncidencia());
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
@@ -303,11 +353,13 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         return idUsuario != null && usuarioRepository.countUsuarioByRol(idUsuario, nombreRol) > 0;
     }
 
-    private IncidenciaEntity obtenerIncidencia(Integer idIncidencia) {
+    private IncidenciaEntity obtenerIncidenciaActiva(Integer idIncidencia) {
         if (idIncidencia == null) {
             return null;
         }
-        return incidenciaRepository.findById(idIncidencia).orElse(null);
+        return incidenciaRepository.findById(idIncidencia)
+            .filter(incidencia -> Boolean.TRUE.equals(incidencia.getActivo()))
+            .orElse(null);
     }
 
     private EstadoIncidenciaEntity obtenerEstado(String nombreEstado) {
