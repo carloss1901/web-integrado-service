@@ -108,10 +108,10 @@ class IncidenciaServiceImplTest {
         request.setTitulo("No enciende el equipo");
         request.setDescripcion("El equipo no muestra imagen");
 
-        when(usuarioRepository.countUsuarioByRol(1, "REPORTANTE")).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(1, 4)).thenReturn(1);
         when(categoriaRepository.existsById(1)).thenReturn(true);
         when(ubicacionRepository.existsById(1)).thenReturn(true);
-        when(estadoIncidenciaRepository.findByNombreActivo("REGISTRADA"))
+        when(estadoIncidenciaRepository.findById(1))
             .thenReturn(Optional.of(estado(1, "REGISTRADA")));
         when(incidenciaRepository.save(any(IncidenciaEntity.class))).thenAnswer(invocation -> {
             IncidenciaEntity incidencia = invocation.getArgument(0);
@@ -131,7 +131,7 @@ class IncidenciaServiceImplTest {
         RegistrarIncidenciaRequest request = new RegistrarIncidenciaRequest();
         request.setIdReportante(1);
 
-        when(usuarioRepository.countUsuarioByRol(1, "REPORTANTE")).thenReturn(0);
+        when(usuarioRepository.countUsuarioByRolId(1, 4)).thenReturn(0);
 
         ResponseEntity<Object> response = incidenciaService.registrarIncidencia(request);
 
@@ -204,12 +204,12 @@ class IncidenciaServiceImplTest {
         sla.setIdSla(1);
         sla.setMinutosResolucion(120);
 
-        when(usuarioRepository.countUsuarioByRol(2, "OPERADOR_MESA_CONTROL")).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(2, 2)).thenReturn(1);
         when(severidadRepository.existsById(1)).thenReturn(true);
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
         when(prioridadRepository.findByPuntaje(4)).thenReturn(Optional.of(prioridad));
         when(slaRepository.findActivoByIdSeveridad(1)).thenReturn(Optional.of(sla));
-        when(estadoIncidenciaRepository.findByNombreActivo("CLASIFICADA"))
+        when(estadoIncidenciaRepository.findById(2))
             .thenReturn(Optional.of(estado(2, "CLASIFICADA")));
 
         ResponseEntity<Object> response = incidenciaService.clasificarIncidencia(request);
@@ -226,10 +226,10 @@ class IncidenciaServiceImplTest {
         request.setIdUsuario(2);
         request.setIdResponsable(3);
 
-        when(usuarioRepository.countUsuarioByRol(2, "OPERADOR_MESA_CONTROL")).thenReturn(1);
-        when(usuarioRepository.countUsuarioByRol(3, "RESPONSABLE_ATENCION")).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(2, 2)).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, null)));
-        when(estadoIncidenciaRepository.findByNombreActivo("ASIGNADA"))
+        when(estadoIncidenciaRepository.findById(3))
             .thenReturn(Optional.of(estado(3, "ASIGNADA")));
 
         ResponseEntity<Object> response = incidenciaService.asignarResponsable(request);
@@ -244,9 +244,9 @@ class IncidenciaServiceImplTest {
         request.setIdIncidencia(1);
         request.setIdUsuario(3);
 
-        when(usuarioRepository.countUsuarioByRol(3, "RESPONSABLE_ATENCION")).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, 3)));
-        when(estadoIncidenciaRepository.findByNombreActivo("EN_ATENCION"))
+        when(estadoIncidenciaRepository.findById(4))
             .thenReturn(Optional.of(estado(4, "EN_ATENCION")));
 
         ResponseEntity<Object> response = incidenciaService.iniciarAtencion(request);
@@ -261,10 +261,10 @@ class IncidenciaServiceImplTest {
         request.setIdIncidencia(1);
         request.setIdUsuario(3);
 
-        when(usuarioRepository.countUsuarioByRol(3, "RESPONSABLE_ATENCION")).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, 3)));
-        when(estadoIncidenciaRepository.findByNombreActivo("RESUELTA"))
-            .thenReturn(Optional.of(estado(5, "RESUELTA")));
+        when(estadoIncidenciaRepository.findById(6))
+            .thenReturn(Optional.of(estado(6, "RESUELTA")));
 
         ResponseEntity<Object> response = incidenciaService.resolverIncidencia(request);
 
@@ -278,10 +278,10 @@ class IncidenciaServiceImplTest {
         request.setIdIncidencia(1);
         request.setIdUsuario(4);
 
-        when(usuarioRepository.countUsuarioByRol(4, "SUPERVISOR")).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(4, 5)).thenReturn(1);
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, null)));
-        when(estadoIncidenciaRepository.findByNombreActivo("CERRADA"))
-            .thenReturn(Optional.of(estado(6, "CERRADA")));
+        when(estadoIncidenciaRepository.findById(7))
+            .thenReturn(Optional.of(estado(7, "CERRADA")));
 
         ResponseEntity<Object> response = incidenciaService.cerrarIncidencia(request);
 

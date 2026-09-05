@@ -39,17 +39,17 @@ import java.util.List;
 @Service
 public class IncidenciaServiceImpl implements IncidenciaService {
 
-    private static final String ROL_REPORTANTE = "REPORTANTE";
-    private static final String ROL_OPERADOR = "OPERADOR_MESA_CONTROL";
-    private static final String ROL_RESPONSABLE = "RESPONSABLE_ATENCION";
-    private static final String ROL_SUPERVISOR = "SUPERVISOR";
+    private static final int ROL_REPORTANTE = 4;
+    private static final int ROL_OPERADOR = 2;
+    private static final int ROL_RESPONSABLE = 3;
+    private static final int ROL_SUPERVISOR = 5;
 
-    private static final String ESTADO_REGISTRADA = "REGISTRADA";
-    private static final String ESTADO_CLASIFICADA = "CLASIFICADA";
-    private static final String ESTADO_ASIGNADA = "ASIGNADA";
-    private static final String ESTADO_EN_ATENCION = "EN_ATENCION";
-    private static final String ESTADO_RESUELTA = "RESUELTA";
-    private static final String ESTADO_CERRADA = "CERRADA";
+    private static final int ESTADO_REGISTRADA = 1;
+    private static final int ESTADO_CLASIFICADA = 2;
+    private static final int ESTADO_ASIGNADA = 3;
+    private static final int ESTADO_EN_ATENCION = 4;
+    private static final int ESTADO_RESUELTA = 6;
+    private static final int ESTADO_CERRADA = 7;
 
     @Autowired
     private IncidenciaRepository incidenciaRepository;
@@ -314,7 +314,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     private ResponseEntity<Object> cambiarEstadoPorResponsable(
         ActualizarEstadoIncidenciaRequest request,
-        String estadoNuevo,
+        int estadoNuevo,
         String tipoEvento,
         String descripcion,
         boolean registrarResolucion,
@@ -349,8 +349,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, descripcion);
     }
 
-    private boolean tieneRol(Integer idUsuario, String nombreRol) {
-        return idUsuario != null && usuarioRepository.countUsuarioByRol(idUsuario, nombreRol) > 0;
+    private boolean tieneRol(Integer idUsuario, int idRol) {
+        return idUsuario != null && usuarioRepository.countUsuarioByRolId(idUsuario, idRol) > 0;
     }
 
     private IncidenciaEntity obtenerIncidenciaActiva(Integer idIncidencia) {
@@ -362,9 +362,9 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             .orElse(null);
     }
 
-    private EstadoIncidenciaEntity obtenerEstado(String nombreEstado) {
-        return estadoIncidenciaRepository.findByNombreActivo(nombreEstado)
-            .orElseThrow(() -> new IllegalStateException("No existe el estado " + nombreEstado));
+    private EstadoIncidenciaEntity obtenerEstado(int idEstado) {
+        return estadoIncidenciaRepository.findById(idEstado)
+            .orElseThrow(() -> new IllegalStateException("No existe el estado " + idEstado));
     }
 
     private void registrarHistorial(Integer idIncidencia, Integer idUsuario, String tipoEvento,

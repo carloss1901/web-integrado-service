@@ -94,7 +94,7 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Integer>
         AND UR.ESTADO = TRUE
         AND UR.ACTIVO = TRUE
         AND R.ACTIVO = TRUE
-        AND UPPER(R.NOMBRE) = UPPER(:nombreRol)
+        AND R.ID_ROL = :idRol
         """, nativeQuery = true)
-    Integer countUsuarioByRol(@Param("idUsuario") Integer idUsuario, @Param("nombreRol") String nombreRol);
+    Integer countUsuarioByRolId(@Param("idUsuario") Integer idUsuario, @Param("idRol") Integer idRol);
 }
