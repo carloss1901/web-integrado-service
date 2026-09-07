@@ -24,14 +24,19 @@ import com.proyecto.integrador.repository.SlaRepository;
 import com.proyecto.integrador.repository.UbicacionRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.service.impl.IncidenciaServiceImpl;
+import com.proyecto.integrador.util.CustomPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -304,5 +309,34 @@ class IncidenciaServiceImplTest {
 
         assertEquals(200, response.getStatusCode().value());
         verify(incidenciaEvidenciaRepository).save(any());
+    }
+
+    @Test
+    void listarIncidenciasVencidasDebeRetornarPaginaConResultados() {
+        IncidenciaProjection projection = mock(IncidenciaProjection.class);
+        IncidenciaResponse response = new IncidenciaResponse();
+        response.setIdIncidencia(1);
+        response.setTitulo("Sin atender dentro del SLA");
+
+        Page<IncidenciaProjection> page = new PageImpl<>(List.of(projection), PageRequest.of(0, 10), 1);
+        when(incidenciaRepository.listarIncidenciasVencidas(PageRequest.of(0, 10))).thenReturn(page);
+        when(genericMapper.toResponseList(List.of(projection), IncidenciaResponse.class))
+            .thenReturn(List.of(response));
+
+        CustomPage<IncidenciaResponse> result = incidenciaService.listarIncidenciasVencidas(1, 10);
+
+        assertEquals(1, result.getData().size());
+        assertEquals("Sin atender dentro del SLA", result.getData().get(0).getTitulo());
+    }
+
+    @Test
+    void listarIncidenciasVencidasDebeRetornarPaginaVacia() {
+        Page<IncidenciaProjection> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+        when(incidenciaRepository.listarIncidenciasVencidas(PageRequest.of(0, 10))).thenReturn(page);
+        when(genericMapper.toResponseList(List.of(), IncidenciaResponse.class)).thenReturn(List.of());
+
+        CustomPage<IncidenciaResponse> result = incidenciaService.listarIncidenciasVencidas(1, 10);
+
+        assertEquals(0, result.getData().size());
     }
 }

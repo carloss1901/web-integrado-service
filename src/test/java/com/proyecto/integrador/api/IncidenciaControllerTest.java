@@ -1,28 +1,5 @@
 package com.proyecto.integrador.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
-import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
-import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
-import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
-import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
-import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
-import com.proyecto.integrador.model.response.IncidenciaResponse;
-import com.proyecto.integrador.service.IncidenciaService;
-import com.proyecto.integrador.util.CustomPage;
-import com.proyecto.integrador.util.MessageResponse;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.List;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +9,32 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
+import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectivaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
+import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
+import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
+import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
+import com.proyecto.integrador.model.response.IncidenciaResponse;
+import com.proyecto.integrador.service.IncidenciaService;
+import com.proyecto.integrador.util.CustomPage;
+import com.proyecto.integrador.util.MessageResponse;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(IncidenciaController.class)
 class IncidenciaControllerTest {
@@ -202,5 +205,98 @@ class IncidenciaControllerTest {
             .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).asignarResponsable(any(AsignarResponsableRequest.class));
+    }
+
+    @Test
+    void registrarAccionCorrectivaDebeResponderOk() throws Exception {
+        RegistrarAccionCorrectivaRequest request = new RegistrarAccionCorrectivaRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(3);
+        request.setDescripcion("Se reemplazo el disco danado");
+
+        when(incidenciaService.registrarAccionCorrectiva(any(RegistrarAccionCorrectivaRequest.class)))
+            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK,
+                "Accion correctiva registrada correctamente"));
+
+        mockMvc.perform(post("/incidencias/acciones-correctivas")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true));
+
+        verify(incidenciaService).registrarAccionCorrectiva(any(RegistrarAccionCorrectivaRequest.class));
+    }
+
+    @Test
+    void registrarComentarioDebeResponderOk() throws Exception {
+        RegistrarComentarioRequest request = new RegistrarComentarioRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(3);
+        request.setComentario("Se coordino el reemplazo con el area de TI");
+
+        when(incidenciaService.registrarComentario(any(RegistrarComentarioRequest.class)))
+            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Comentario registrado correctamente"));
+
+        mockMvc.perform(post("/incidencias/comentarios")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true));
+
+        verify(incidenciaService).registrarComentario(any(RegistrarComentarioRequest.class));
+    }
+
+    @Test
+    void listarAccionesCorrectivasDebeResponderOk() throws Exception {
+        IncidenciaAccionCorrectivaResponse response = new IncidenciaAccionCorrectivaResponse();
+        response.setIdAccionCorrectiva(1);
+        response.setDescripcion("Se reemplazo el disco danado");
+
+        CustomPage<IncidenciaAccionCorrectivaResponse> page = new CustomPage<>(
+            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarAccionesCorrectivas(1, 1, 10)).thenReturn(page);
+
+        mockMvc.perform(get("/incidencias/1/acciones-correctivas"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+            .andExpect(jsonPath("$.data[0].descripcion").value("Se reemplazo el disco danado"));
+
+        verify(incidenciaService).listarAccionesCorrectivas(1, 1, 10);
+    }
+
+    @Test
+    void listarIncidenciasVencidasDebeResponderOk() throws Exception {
+        IncidenciaResponse response = new IncidenciaResponse();
+        response.setIdIncidencia(1);
+        response.setTitulo("Sin atender dentro del SLA");
+
+        CustomPage<IncidenciaResponse> page = new CustomPage<>(
+            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarIncidenciasVencidas(1, 10)).thenReturn(page);
+
+        mockMvc.perform(get("/incidencias/vencidas"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+            .andExpect(jsonPath("$.data[0].titulo").value("Sin atender dentro del SLA"));
+
+        verify(incidenciaService).listarIncidenciasVencidas(1, 10);
+    }
+
+    @Test
+    void listarComentariosDebeResponderOk() throws Exception {
+        IncidenciaComentarioResponse response = new IncidenciaComentarioResponse();
+        response.setIdComentario(1);
+        response.setComentario("Se coordino el reemplazo con el area de TI");
+
+        CustomPage<IncidenciaComentarioResponse> page = new CustomPage<>(
+            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarComentarios(1, 1, 10)).thenReturn(page);
+
+        mockMvc.perform(get("/incidencias/1/comentarios"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+            .andExpect(jsonPath("$.data[0].comentario").value("Se coordino el reemplazo con el area de TI"));
+
+        verify(incidenciaService).listarComentarios(1, 1, 10);
     }
 }

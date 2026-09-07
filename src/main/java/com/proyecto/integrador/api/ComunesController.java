@@ -4,14 +4,7 @@ import com.proyecto.integrador.model.enums.TipoMaestro;
 import com.proyecto.integrador.model.request.comunes.MantenerMaestroRequest;
 import com.proyecto.integrador.model.response.MaestroResponse;
 import com.proyecto.integrador.service.ComunesService;
-import com.proyecto.integrador.util.Constantes;
-import com.proyecto.integrador.util.ErrorGenerico;
 import com.proyecto.integrador.util.MessageResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,59 +33,41 @@ public class ComunesController {
     private ComunesService comunesService;
 
     @GetMapping(value = "roles", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar roles", description = "Listar roles", responses = {
-        @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                array = @ArraySchema(schema = @Schema(implementation = MaestroResponse.class)))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_400, description = Constantes.API_STATUS_400,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_500, description = Constantes.MSF_API_500,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class)))
-    })
     public List<MaestroResponse> listarRoles() {
         return comunesService.listarRoles();
     }
 
     @GetMapping(value = "categorias", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar categorias", description = "Listar categorias")
     public List<MaestroResponse> listarCategorias() {
         return comunesService.listarCategorias();
     }
 
     @GetMapping(value = "ubicaciones", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar ubicaciones", description = "Listar ubicaciones")
     public List<MaestroResponse> listarUbicaciones() {
         return comunesService.listarUbicaciones();
     }
 
     @GetMapping(value = "severidades", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar severidades", description = "Listar severidades")
     public List<MaestroResponse> listarSeveridades() {
         return comunesService.listarSeveridades();
     }
 
     @GetMapping(value = "prioridades", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar prioridades", description = "Listar prioridades")
     public List<MaestroResponse> listarPrioridades() {
         return comunesService.listarPrioridades();
     }
 
     @GetMapping(value = "estados-incidencia", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar estados de incidencia", description = "Listar estados de incidencia")
     public List<MaestroResponse> listarEstadosIncidencia() {
         return comunesService.listarEstadosIncidencia();
     }
 
     @GetMapping(value = "sla", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar SLA", description = "Listar SLA configurados por severidad")
     public List<MaestroResponse> listarSla() {
         return comunesService.listarSla();
     }
 
     @PostMapping(value = "{maestro}/registrar", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Registrar maestro", description = "Registrar maestro")
     public ResponseEntity<Object> registrarMaestro(
         @PathVariable("maestro") String maestro,
         @RequestBody MantenerMaestroRequest request
@@ -101,7 +76,6 @@ public class ComunesController {
     }
 
     @PutMapping(value = "{maestro}/actualizar", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Actualizar maestro", description = "Actualizar maestro")
     public ResponseEntity<Object> actualizarMaestro(
         @PathVariable("maestro") String maestro,
         @RequestBody MantenerMaestroRequest request
@@ -110,7 +84,6 @@ public class ComunesController {
     }
 
     @DeleteMapping(value = "{maestro}/eliminar/{idMaestro}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Eliminar maestro", description = "Eliminar maestro de forma logica")
     public ResponseEntity<Object> eliminarMaestro(
         @PathVariable("maestro") String maestro,
         @PathVariable("idMaestro") Integer idMaestro

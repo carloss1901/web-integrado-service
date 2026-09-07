@@ -4,17 +4,10 @@ import com.proyecto.integrador.model.request.usuario.ActualizarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.ListarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.RegistrarUsuarioRequest;
 import com.proyecto.integrador.model.projection.UsuarioProjection;
-import com.proyecto.integrador.model.response.UsuarioResponse;
 import com.proyecto.integrador.service.UsuarioService;
-import com.proyecto.integrador.util.Constantes;
 import com.proyecto.integrador.util.CustomPage;
-import com.proyecto.integrador.util.ErrorGenerico;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -40,17 +33,6 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping(value = "listar", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Listar usuarios", description = "Listar usuarios", responses = {
-        @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = UsuarioProjection.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_400, description = Constantes.MSG_API_400,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_500, description = Constantes.MSF_API_500,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class)))
-    })
     public CustomPage<UsuarioProjection> listarUsuario(
         @RequestParam(value = "usuario", required = false) String usuario,
         @RequestParam(value = "nombres", required = false) String nombres,
@@ -75,65 +57,21 @@ public class UsuarioController {
     }
 
     @GetMapping(value = "{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Obtener usuario", description = "Obtener datos del usuario por id", responses = {
-        @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = UsuarioResponse.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_400, description = Constantes.MSG_API_400,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_500, description = Constantes.MSF_API_500,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class)))
-    })
     public ResponseEntity<Object> obtenerUsuario(@PathVariable("idUsuario") Integer idUsuario) {
         return usuarioService.obtenerUsuario(idUsuario);
     }
 
     @PostMapping(value = "registrar", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Registrar usuario", description = "Registrar usuario", responses = {
-        @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ResponseEntity.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_400, description = Constantes.MSG_API_400,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_500, description = Constantes.MSF_API_500,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class)))
-    })
     public ResponseEntity<Object> registrarUsuario(@Valid @RequestBody RegistrarUsuarioRequest request) {
         return usuarioService.registrarUsuario(request);
     }
 
     @PutMapping(value = "actualizar", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Actualizar usuario", description = "Actualizar usuario y sus roles", responses = {
-        @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ResponseEntity.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_400, description = Constantes.MSG_API_400,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_500, description = Constantes.MSF_API_500,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class)))
-    })
     public ResponseEntity<Object> actualizarUsuario(@Valid @RequestBody ActualizarUsuarioRequest request) {
         return usuarioService.actualizarUsuario(request);
     }
 
     @DeleteMapping(value = "eliminar/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Eliminar usuario", description = "Eliminar usuario de forma logica", responses = {
-        @ApiResponse(responseCode = Constantes.API_STATUS_200, description = Constantes.MSG_API_200,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ResponseEntity.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_400, description = Constantes.MSG_API_400,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class))),
-        @ApiResponse(responseCode = Constantes.API_STATUS_500, description = Constantes.MSF_API_500,
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ErrorGenerico.class)))
-    })
     public ResponseEntity<Object> eliminarUsuario(@PathVariable("idUsuario") Integer idUsuario) {
         return usuarioService.eliminarUsuario(idUsuario);
     }

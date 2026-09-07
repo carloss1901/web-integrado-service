@@ -2,6 +2,8 @@ package com.proyecto.integrador.service.impl;
 
 import com.proyecto.integrador.mapper.GenericMapper;
 import com.proyecto.integrador.model.entity.EstadoIncidenciaEntity;
+import com.proyecto.integrador.model.entity.IncidenciaAccionCorrectivaEntity;
+import com.proyecto.integrador.model.entity.IncidenciaComentarioEntity;
 import com.proyecto.integrador.model.entity.IncidenciaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaEvidenciaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaHistorialEntity;
@@ -11,13 +13,19 @@ import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenc
 import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectivaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
+import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
 import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.repository.CategoriaRepository;
 import com.proyecto.integrador.repository.EstadoIncidenciaRepository;
+import com.proyecto.integrador.repository.IncidenciaAccionCorrectivaRepository;
+import com.proyecto.integrador.repository.IncidenciaComentarioRepository;
 import com.proyecto.integrador.repository.IncidenciaEvidenciaRepository;
 import com.proyecto.integrador.repository.IncidenciaHistorialRepository;
 import com.proyecto.integrador.repository.IncidenciaRepository;
@@ -26,8 +34,6 @@ import com.proyecto.integrador.repository.SeveridadRepository;
 import com.proyecto.integrador.repository.SlaRepository;
 import com.proyecto.integrador.repository.UbicacionRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
-import com.proyecto.integrador.model.projection.IncidenciaEvidenciaProjection;
-import com.proyecto.integrador.model.projection.IncidenciaHistorialProjection;
 import com.proyecto.integrador.service.IncidenciaService;
 import com.proyecto.integrador.util.CustomPage;
 import com.proyecto.integrador.util.MessageResponse;
@@ -70,6 +76,12 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     private IncidenciaEvidenciaRepository incidenciaEvidenciaRepository;
 
     @Autowired
+    private IncidenciaAccionCorrectivaRepository incidenciaAccionCorrectivaRepository;
+
+    @Autowired
+    private IncidenciaComentarioRepository incidenciaComentarioRepository;
+
+    @Autowired
     private UsuarioRepository usuarioRepository;
 
     @Autowired
@@ -97,6 +109,14 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listarIncidencias() {
         return genericMapper.toResponseList(incidenciaRepository.listarIncidencias(), IncidenciaResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaResponse> listarIncidenciasVencidas(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return mapearPagina(incidenciaRepository.listarIncidenciasVencidas(pageable),
+            pageable, IncidenciaResponse.class);
     }
 
     @Override
@@ -322,22 +342,90 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     }
 
     @Override
+    @Transactional
+    public ResponseEntity<Object> registrarAccionCorrectiva(RegistrarAccionCorrectivaRequest request) {
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+        if (!usuarioRepository.existsById(request.getIdUsuario())) {
+            return error("El usuario no existe");
+        }
+
+        IncidenciaAccionCorrectivaEntity accion = new IncidenciaAccionCorrectivaEntity();
+        accion.setIdIncidencia(request.getIdIncidencia());
+        accion.setIdUsuario(request.getIdUsuario());
+        accion.setDescripcion(request.getDescripcion());
+        accion.setFechaRegistro(LocalDateTime.now());
+        accion.setActivo(Boolean.TRUE);
+        incidenciaAccionCorrectivaRepository.save(accion);
+
+        registrarHistorial(request.getIdIncidencia(), request.getIdUsuario(), "REGISTRO_ACCION_CORRECTIVA",
+            null, accion.getDescripcion(), "Registro de accion correctiva");
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Accion correctiva registrada correctamente");
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> registrarComentario(RegistrarComentarioRequest request) {
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+        if (!usuarioRepository.existsById(request.getIdUsuario())) {
+            return error("El usuario no existe");
+        }
+
+        IncidenciaComentarioEntity comentario = new IncidenciaComentarioEntity();
+        comentario.setIdIncidencia(request.getIdIncidencia());
+        comentario.setIdUsuario(request.getIdUsuario());
+        comentario.setComentario(request.getComentario());
+        comentario.setFechaRegistro(LocalDateTime.now());
+        comentario.setActivo(Boolean.TRUE);
+        incidenciaComentarioRepository.save(comentario);
+
+        registrarHistorial(request.getIdIncidencia(), request.getIdUsuario(), "REGISTRO_COMENTARIO",
+            null, request.getComentario(), "Registro de comentario");
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Comentario registrado correctamente");
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public CustomPage<IncidenciaHistorialResponse> listarHistorial(Integer idIncidencia, Integer page, Integer size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<IncidenciaHistorialProjection> result = incidenciaHistorialRepository.listarHistorial(idIncidencia, pageable);
-        List<IncidenciaHistorialResponse> content = genericMapper.toResponseList(result.getContent(),
-            IncidenciaHistorialResponse.class);
-        return new CustomPage<>(new PageImpl<>(content, pageable, result.getTotalElements()));
+        return mapearPagina(incidenciaHistorialRepository.listarHistorial(idIncidencia, pageable),
+            pageable, IncidenciaHistorialResponse.class);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(Integer idIncidencia, Integer page, Integer size) {
         Pageable pageable = PageRequest.of(page - 1, size);
-        Page<IncidenciaEvidenciaProjection> result = incidenciaEvidenciaRepository.listarEvidencias(idIncidencia, pageable);
-        List<IncidenciaEvidenciaResponse> content = genericMapper.toResponseList(result.getContent(),
-            IncidenciaEvidenciaResponse.class);
+        return mapearPagina(incidenciaEvidenciaRepository.listarEvidencias(idIncidencia, pageable),
+            pageable, IncidenciaEvidenciaResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaAccionCorrectivaResponse> listarAccionesCorrectivas(Integer idIncidencia,
+                                                                                    Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return mapearPagina(incidenciaAccionCorrectivaRepository.listarAccionesCorrectivas(idIncidencia, pageable),
+            pageable, IncidenciaAccionCorrectivaResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaComentarioResponse> listarComentarios(Integer idIncidencia, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return mapearPagina(incidenciaComentarioRepository.listarComentarios(idIncidencia, pageable),
+            pageable, IncidenciaComentarioResponse.class);
+    }
+
+    private <P, T> CustomPage<T> mapearPagina(Page<P> result, Pageable pageable, Class<T> targetClass) {
+        List<T> content = genericMapper.toResponseList(result.getContent(), targetClass);
         return new CustomPage<>(new PageImpl<>(content, pageable, result.getTotalElements()));
     }
 
