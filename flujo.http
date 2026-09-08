@@ -1,0 +1,93 @@
+### ============================================================
+###  FLUJO SIMPLE - login + incidencia de principio a fin
+###  Password usuarios demo: 123456
+###  Abrir en VS Code (ext. REST Client) o IntelliJ Ultimate y
+###  ejecutar cada paso en orden con el boton "Send Request" (▶)
+### ============================================================
+
+@host = http://localhost:8080
+
+### 1. LOGIN (devuelve el token; queda capturado en {{token}})
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "usuario": "admin",
+  "contrasena": "123456"
+}
+
+> {% client.global.set("token", response.body.data); %}
+
+### 2. OPERADOR registra la incidencia
+# @name registrarIncidencia
+POST {{host}}/incidencias/registrar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idReportante": 4,
+  "idCategoria": 1,
+  "idUbicacion": 2,
+  "titulo": "PC no enciende en area administrativa",
+  "descripcion": "El equipo de la oficina 201 no enciende desde esta manana."
+}
+
+### 3. OPERADOR clasifica la incidencia
+POST {{host}}/incidencias/clasificar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idIncidencia": 1,
+  "idUsuario": 2,
+  "idSeveridad": 3,
+  "impacto": 3,
+  "urgencia": 2,
+  "reincidencia": 1
+}
+
+### 4. OPERADOR asigna responsable (USUARIO 3)
+POST {{host}}/incidencias/asignar-responsable
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idIncidencia": 1,
+  "idUsuario": 2,
+  "idResponsable": 3
+}
+
+### 5. RESPONSABLE inicia la atencion
+POST {{host}}/incidencias/iniciar-atencion
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idIncidencia": 1,
+  "idUsuario": 3
+}
+
+### 6. RESPONSABLE resuelve la incidencia
+POST {{host}}/incidencias/resolver
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idIncidencia": 1,
+  "idUsuario": 3
+}
+
+### 7. SUPERVISOR cierra la incidencia
+POST {{host}}/incidencias/cerrar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "idIncidencia": 1,
+  "idUsuario": 5
+}
+
+### 8. Ver el historial completo de la incidencia
+GET {{host}}/incidencias/1/historial?page=1&size=10
+Authorization: Bearer {{token}}

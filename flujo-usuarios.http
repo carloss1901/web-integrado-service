@@ -1,0 +1,39 @@
+### ============================================================
+###  USUARIOS - CRUD completo
+### ============================================================
+
+@host = http://localhost:8080
+
+### 1. Listar usuarios
+GET {{host}}/usuario/listar?usuario=&nombres=&apellidos=&correo=&estado=&page=1&size=10
+
+### 2. Obtener usuario por id
+GET {{host}}/usuario/1
+
+### 3. Registrar usuario
+POST {{host}}/usuario/registrar
+Content-Type: application/json
+
+{
+  "usuario": "analista",
+  "nombres": "Ana",
+  "apellidos": "Lisbeth",
+  "correo": "analista@demo.com",
+  "password": "123456",
+  "idsRoles": [3, 5]
+}
+
+### 4. Actualizar usuario
+PUT {{host}}/usuario/actualizar
+Content-Type: application/json
+
+{
+  "idUsuario": 6,
+  "nombres": "Ana",
+  "apellidos": "Lisbeth Rojas",
+  "correo": "analista@demo.com",
+  "idsRoles": [3, 5]
+}
+
+### 5. Eliminar usuario
+DELETE {{host}}/usuario/eliminar/6

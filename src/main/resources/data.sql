@@ -6,11 +6,11 @@ INSERT INTO rol (id_rol, nombre, activo) VALUES
 (5, 'SUPERVISOR', 1);
 
 INSERT INTO usuario (id_usuario, usuario, nombres, apellidos, correo, password, estado, activo) VALUES
-(1, 'admin', 'Admin', 'Sistema', 'admin@demo.com', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 1, 1),
-(2, 'operador', 'Operador', 'Mesa Control', 'operador@demo.com', '1725165c9a0b3698a3d01016e0d8205155820b8d7f21835ca64c0f81c728d880', 1, 1),
-(3, 'responsable', 'Responsable', 'Atencion', 'responsable@demo.com', '5287ed0b861b2537eeefd7c6d7572a82aafb2a9ba7580687d44ee7a1a3064c02', 1, 1),
-(4, 'reportante', 'Usuario', 'Reportante', 'reportante@demo.com', 'ec58aa2b7e8e365e4b3a4ca68ff64c67bf3fa083d57cce124104b6eceb640e1e', 1, 1),
-(5, 'supervisor', 'Supervisor', 'Incidencias', 'supervisor@demo.com', '02423ab2e61297b8262449c93e19be42fb5bbb275860a7d93b1ebdc7b6535ed7', 1, 1);
+(1, 'admin', 'Admin', 'Sistema', 'admin@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
+(2, 'operador', 'Operador', 'Mesa Control', 'operador@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
+(3, 'responsable', 'Responsable', 'Atencion', 'responsable@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
+(4, 'reportante', 'Usuario', 'Reportante', 'reportante@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
+(5, 'supervisor', 'Supervisor', 'Incidencias', 'supervisor@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1);
 
 INSERT INTO usuario_rol (id_usuario_rol, id_usuario, id_rol, estado, activo) VALUES
 (1, 1, 1, 1, 1),
@@ -67,3 +67,13 @@ INSERT INTO sla (id_sla, id_severidad, minutos_resolucion, activo) VALUES
 (2, 2, 1440, 1),
 (3, 3, 480, 1),
 (4, 4, 120, 1);
+
+ALTER TABLE rol ALTER COLUMN id_rol RESTART WITH 6;
+ALTER TABLE usuario ALTER COLUMN id_usuario RESTART WITH 6;
+ALTER TABLE usuario_rol ALTER COLUMN id_usuario_rol RESTART WITH 6;
+ALTER TABLE categoria ALTER COLUMN id_categoria RESTART WITH 9;
+ALTER TABLE ubicacion ALTER COLUMN id_ubicacion RESTART WITH 9;
+ALTER TABLE severidad ALTER COLUMN id_severidad RESTART WITH 5;
+ALTER TABLE prioridad ALTER COLUMN id_prioridad RESTART WITH 5;
+ALTER TABLE estado_incidencia ALTER COLUMN id_estado RESTART WITH 10;
+ALTER TABLE sla ALTER COLUMN id_sla RESTART WITH 5;
