@@ -8,7 +8,7 @@ import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.repository.UsuarioRolRepository;
 import com.proyecto.integrador.security.JwtUtil;
 import com.proyecto.integrador.service.impl.AuthServiceImpl;
-import com.proyecto.integrador.util.PasswordHashUtil;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,11 +16,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
@@ -41,6 +39,9 @@ class AuthServiceImplTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -50,7 +51,9 @@ class AuthServiceImplTest {
         usuario.setUsuario("admin");
         usuario.setNombres("Admin");
         usuario.setApellidos("Sistema");
-        usuario.setPassword(PasswordHashUtil.hash("123456"));
+        usuario.setPassword(
+                "$2a$10$passwordCodificadoParaPrueba"
+        );
         usuario.setEstado(true);
         usuario.setActivo(true);
         return usuario;
@@ -67,6 +70,10 @@ class AuthServiceImplTest {
         when(usuarioRolRepository.listarIdsRolesPorUsuario(1)).thenReturn(List.of(1));
         when(rolRepository.findAllById(List.of(1))).thenReturn(List.of(rol));
         when(jwtUtil.generateToken(1, "admin", "Admin", "Sistema", List.of("ADMINISTRADOR"))).thenReturn("token-demo");
+        when(passwordEncoder.matches(
+                "123456",
+                usuario.getPassword()
+        )).thenReturn(true);
 
         LoginRequest request = new LoginRequest();
         request.setUsuario("admin");
@@ -112,7 +119,10 @@ class AuthServiceImplTest {
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertEquals(false, body.get("success"));
-        assertEquals("Usuario inactivo", body.get("message"));
+        assertEquals(
+                "Usuario o contrasena incorrectos",
+                body.get("message")
+        );
     }
 
     @Test
@@ -120,6 +130,10 @@ class AuthServiceImplTest {
         UsuarioEntity usuario = usuarioValido();
 
         when(usuarioRepository.findByUsuarioIgnoreCase("admin")).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches(
+                "incorrecta",
+                usuario.getPassword()
+        )).thenReturn(false);
 
         LoginRequest request = new LoginRequest();
         request.setUsuario("admin");

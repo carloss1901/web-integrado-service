@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
@@ -40,8 +40,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = IncidenciaController.class, excludeAutoConfiguration = {
-    SecurityAutoConfiguration.class,
-    SecurityFilterAutoConfiguration.class
+        SecurityAutoConfiguration.class,
+        SecurityFilterAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 class IncidenciaControllerTest {
@@ -65,22 +65,27 @@ class IncidenciaControllerTest {
         when(incidenciaService.listarIncidencias()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/incidencias/listar"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].titulo").value("No enciende el equipo"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].titulo").value("No enciende el equipo"));
 
         verify(incidenciaService).listarIncidencias();
     }
 
     @Test
     void obtenerIncidenciaDebeUsarPathParam() throws Exception {
-        when(incidenciaService.obtenerIncidencia(1))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Proceso exitoso"));
+        when(incidenciaService.obtenerIncidencia(1, 1))
+                .thenReturn(MessageResponse.setResponse(
+                        Boolean.TRUE,
+                        HttpStatus.OK,
+                        "Proceso exitoso"
+                ));
 
-        mockMvc.perform(get("/incidencias/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+        mockMvc.perform(get("/incidencias/1")
+                        .requestAttr("idUsuarioAutenticado", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
-        verify(incidenciaService).obtenerIncidencia(1);
+        verify(incidenciaService).obtenerIncidencia(1, 1);
     }
 
     @Test
@@ -93,13 +98,14 @@ class IncidenciaControllerTest {
         request.setDescripcion("El equipo no muestra imagen");
 
         when(incidenciaService.registrarIncidencia(any(RegistrarIncidenciaRequest.class)))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia registrada correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia registrada correctamente"));
 
         mockMvc.perform(post("/incidencias/registrar")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                        .requestAttr("idUsuarioAutenticado", 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).registrarIncidencia(any(RegistrarIncidenciaRequest.class));
     }
@@ -114,13 +120,13 @@ class IncidenciaControllerTest {
         request.setDescripcion("Actualizacion de detalle");
 
         when(incidenciaService.actualizarIncidencia(any(ActualizarIncidenciaRequest.class)))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia actualizada correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia actualizada correctamente"));
 
         mockMvc.perform(put("/incidencias/actualizar")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).actualizarIncidencia(any(ActualizarIncidenciaRequest.class));
     }
@@ -128,11 +134,11 @@ class IncidenciaControllerTest {
     @Test
     void eliminarIncidenciaDebeUsarPathParam() throws Exception {
         when(incidenciaService.eliminarIncidencia(1))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia eliminada correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia eliminada correctamente"));
 
         mockMvc.perform(delete("/incidencias/eliminar/1"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).eliminarIncidencia(1);
     }
@@ -148,13 +154,14 @@ class IncidenciaControllerTest {
         request.setReincidencia(0);
 
         when(incidenciaService.clasificarIncidencia(any(ClasificarIncidenciaRequest.class)))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia clasificada correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia clasificada correctamente"));
 
         mockMvc.perform(post("/incidencias/clasificar")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                        .requestAttr("idUsuarioAutenticado", 2)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).clasificarIncidencia(any(ClasificarIncidenciaRequest.class));
     }
@@ -166,33 +173,47 @@ class IncidenciaControllerTest {
         response.setTipoEvento("REGISTRO_INCIDENCIA");
 
         CustomPage<IncidenciaHistorialResponse> page = new CustomPage<>(
-            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
-        when(incidenciaService.listarHistorial(1, 1, 10)).thenReturn(page);
+                new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarHistorial(1, 1, 1, 10)).thenReturn(page);
 
-        mockMvc.perform(get("/incidencias/1/historial"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
-            .andExpect(jsonPath("$.data[0].tipoEvento").value("REGISTRO_INCIDENCIA"));
+        mockMvc.perform(get("/incidencias/1/historial")
+                .requestAttr("idUsuarioAutenticado", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+                .andExpect(jsonPath("$.data[0].tipoEvento").value("REGISTRO_INCIDENCIA"));
 
-        verify(incidenciaService).listarHistorial(1, 1, 10);
+        verify(incidenciaService).listarHistorial(1, 1, 1, 10);
     }
 
     @Test
     void listarEvidenciasDebeResponderOk() throws Exception {
-        IncidenciaEvidenciaResponse response = new IncidenciaEvidenciaResponse();
+        IncidenciaEvidenciaResponse response =
+                new IncidenciaEvidenciaResponse();
+
         response.setIdEvidencia(1);
         response.setNombreArchivo("captura.png");
 
-        CustomPage<IncidenciaEvidenciaResponse> page = new CustomPage<>(
-            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
-        when(incidenciaService.listarEvidencias(1, 1, 10)).thenReturn(page);
+        CustomPage<IncidenciaEvidenciaResponse> page =
+                new CustomPage<>(
+                        new PageImpl<>(
+                                List.of(response),
+                                PageRequest.of(0, 10),
+                                1
+                        )
+                );
 
-        mockMvc.perform(get("/incidencias/1/evidencias"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
-            .andExpect(jsonPath("$.data[0].nombreArchivo").value("captura.png"));
+        when(incidenciaService.listarEvidencias(1, 1, 1, 10))
+                .thenReturn(page);
 
-        verify(incidenciaService).listarEvidencias(1, 1, 10);
+        mockMvc.perform(get("/incidencias/1/evidencias")
+                        .requestAttr("idUsuarioAutenticado", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+                .andExpect(jsonPath("$.data[0].nombreArchivo")
+                        .value("captura.png"));
+
+        verify(incidenciaService)
+                .listarEvidencias(1, 1, 1, 10);
     }
 
     @Test
@@ -203,13 +224,14 @@ class IncidenciaControllerTest {
         request.setIdResponsable(3);
 
         when(incidenciaService.asignarResponsable(any(AsignarResponsableRequest.class)))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Responsable asignado correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Responsable asignado correctamente"));
 
         mockMvc.perform(post("/incidencias/asignar-responsable")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                        .requestAttr("idUsuarioAutenticado", 2)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).asignarResponsable(any(AsignarResponsableRequest.class));
     }
@@ -222,14 +244,15 @@ class IncidenciaControllerTest {
         request.setDescripcion("Se reemplazo el disco danado");
 
         when(incidenciaService.registrarAccionCorrectiva(any(RegistrarAccionCorrectivaRequest.class)))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK,
-                "Accion correctiva registrada correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK,
+                        "Accion correctiva registrada correctamente"));
 
         mockMvc.perform(post("/incidencias/acciones-correctivas")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                        .requestAttr("idUsuarioAutenticado", 3)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).registrarAccionCorrectiva(any(RegistrarAccionCorrectivaRequest.class));
     }
@@ -242,13 +265,14 @@ class IncidenciaControllerTest {
         request.setComentario("Se coordino el reemplazo con el area de TI");
 
         when(incidenciaService.registrarComentario(any(RegistrarComentarioRequest.class)))
-            .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Comentario registrado correctamente"));
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Comentario registrado correctamente"));
 
         mockMvc.perform(post("/incidencias/comentarios")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.success").value(true));
+                        .requestAttr("idUsuarioAutenticado", 3)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).registrarComentario(any(RegistrarComentarioRequest.class));
     }
@@ -260,15 +284,19 @@ class IncidenciaControllerTest {
         response.setDescripcion("Se reemplazo el disco danado");
 
         CustomPage<IncidenciaAccionCorrectivaResponse> page = new CustomPage<>(
-            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
-        when(incidenciaService.listarAccionesCorrectivas(1, 1, 10)).thenReturn(page);
+                new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarAccionesCorrectivas(1, 1, 1, 10))
+                .thenReturn(page);
 
-        mockMvc.perform(get("/incidencias/1/acciones-correctivas"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
-            .andExpect(jsonPath("$.data[0].descripcion").value("Se reemplazo el disco danado"));
+        mockMvc.perform(get("/incidencias/1/acciones-correctivas")
+                        .requestAttr("idUsuarioAutenticado", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+                .andExpect(jsonPath("$.data[0].descripcion")
+                        .value("Se reemplazo el disco danado"));
 
-        verify(incidenciaService).listarAccionesCorrectivas(1, 1, 10);
+        verify(incidenciaService)
+                .listarAccionesCorrectivas(1, 1, 1, 10);
     }
 
     @Test
@@ -278,13 +306,13 @@ class IncidenciaControllerTest {
         response.setTitulo("Sin atender dentro del SLA");
 
         CustomPage<IncidenciaResponse> page = new CustomPage<>(
-            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+                new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
         when(incidenciaService.listarIncidenciasVencidas(1, 10)).thenReturn(page);
 
         mockMvc.perform(get("/incidencias/vencidas"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
-            .andExpect(jsonPath("$.data[0].titulo").value("Sin atender dentro del SLA"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+                .andExpect(jsonPath("$.data[0].titulo").value("Sin atender dentro del SLA"));
 
         verify(incidenciaService).listarIncidenciasVencidas(1, 10);
     }
@@ -296,14 +324,44 @@ class IncidenciaControllerTest {
         response.setComentario("Se coordino el reemplazo con el area de TI");
 
         CustomPage<IncidenciaComentarioResponse> page = new CustomPage<>(
-            new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
-        when(incidenciaService.listarComentarios(1, 1, 10)).thenReturn(page);
+                new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1));
+        when(incidenciaService.listarComentarios(1, 1, 1, 10)).thenReturn(page);
 
-        mockMvc.perform(get("/incidencias/1/comentarios"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.pageable.pageNumber").value(1))
-            .andExpect(jsonPath("$.data[0].comentario").value("Se coordino el reemplazo con el area de TI"));
+        mockMvc.perform(get("/incidencias/1/comentarios")
+                        .requestAttr("idUsuarioAutenticado", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(1))
+                .andExpect(jsonPath("$.data[0].comentario")
+                        .value("Se coordino el reemplazo con el area de TI"));
 
-        verify(incidenciaService).listarComentarios(1, 1, 10);
+        verify(incidenciaService)
+                .listarComentarios(1, 1, 1, 10);
+    }
+
+    @Test
+    void buscarIncidenciasPorTituloDebeResponderOk()
+            throws Exception {
+
+        IncidenciaBusquedaResponse response =
+                new IncidenciaBusquedaResponse();
+
+        response.setIdIncidencia(1);
+        response.setCodigo("INC-001");
+        response.setTitulo("Equipo no enciende");
+        response.setFechaRegistro("03/10/2026 10:30");
+
+        when(incidenciaService.buscarIncidenciasPorTitulo("equipo"))
+                .thenReturn(List.of(response));
+
+        mockMvc.perform(get("/incidencias/buscar")
+                        .param("texto", "equipo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].codigo")
+                        .value("INC-001"))
+                .andExpect(jsonPath("$[0].titulo")
+                        .value("Equipo no enciende"));
+
+        verify(incidenciaService)
+                .buscarIncidenciasPorTitulo("equipo");
     }
 }

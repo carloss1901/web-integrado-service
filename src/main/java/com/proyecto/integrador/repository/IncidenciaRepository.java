@@ -7,9 +7,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-
+import org.springframework.data.repository.query.Param;
+import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, Integer> {
@@ -115,4 +117,38 @@ public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, In
           AND I.ID_INCIDENCIA = :idIncidencia
         """, nativeQuery = true)
     Optional<IncidenciaProjection> obtenerIncidencia(Integer idIncidencia);
+
+    @Query("""
+        SELECT new com.proyecto.integrador.model.response.IncidenciaBusquedaResponse(
+            i.idIncidencia,
+            i.codigo,
+            i.titulo,
+            i.fechaRegistro
+        )
+        FROM IncidenciaEntity i
+        WHERE i.activo = true
+          AND LOWER(i.titulo)
+              LIKE LOWER(CONCAT('%', :texto, '%'))
+        ORDER BY i.fechaRegistro DESC
+        """)
+    List<IncidenciaBusquedaResponse> buscarResumenPorTitulo(
+            @Param("texto") String texto
+    );
+
+    @Query("""
+        SELECT new com.proyecto.integrador.model.response.IncidenciaBusquedaResponse(
+            i.idIncidencia,
+            i.codigo,
+            i.titulo,
+            i.fechaRegistro
+        )
+        FROM IncidenciaEntity i
+        WHERE i.activo = true
+          AND i.fechaRegistro BETWEEN :inicio AND :fin
+        ORDER BY i.fechaRegistro DESC
+        """)
+    List<IncidenciaBusquedaResponse> buscarPorRangoFechas(
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin
+    );
 }

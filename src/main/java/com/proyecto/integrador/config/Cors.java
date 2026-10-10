@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -17,26 +17,37 @@ import java.util.Arrays;
 @Configuration
 @ConfigurationProperties(prefix = "cors")
 public class Cors {
-    String allowOrigins;
-    String allowMethods;
-    String allowHeaders;
-    String exposedHeaders;
-    int maxAge;
-    boolean allowCredentials;
-    String mapping;
+
+    private String allowOrigins;
+    private String allowMethods;
+    private String allowHeaders;
+    private String exposedHeaders;
+    private int maxAge;
+    private boolean allowCredentials;
+    private String mapping;
 
     @Bean
-    CorsFilter corsFilter() {
-        var config = new CorsConfiguration();
-        config.setAllowCredentials(this.isAllowCredentials());
-        config.setAllowedOrigins(Arrays.asList(this.getAllowOrigins().split(",")));
-        config.setAllowedHeaders(Arrays.asList(this.getAllowHeaders().split(",")));
-        config.setAllowedMethods(Arrays.asList(this.getAllowMethods().split(",")));
-        config.setMaxAge(Duration.ofSeconds(this.getMaxAge()));
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-        var source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration(this.getMapping(), config);
+        configuration.setAllowCredentials(allowCredentials);
+        configuration.setAllowedOrigins(separarValores(allowOrigins));
+        configuration.setAllowedMethods(separarValores(allowMethods));
+        configuration.setAllowedHeaders(separarValores(allowHeaders));
+        configuration.setExposedHeaders(separarValores(exposedHeaders));
+        configuration.setMaxAge(Duration.ofSeconds(maxAge));
 
-        return new CorsFilter(source);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(mapping, configuration);
+
+        return source;
+    }
+
+    private java.util.List<String> separarValores(String valores) {
+        return Arrays.stream(valores.split(","))
+                .map(String::trim)
+                .toList();
     }
 }

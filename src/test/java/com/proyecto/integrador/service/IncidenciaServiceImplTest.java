@@ -25,6 +25,7 @@ import com.proyecto.integrador.repository.UbicacionRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.service.impl.IncidenciaServiceImpl;
 import com.proyecto.integrador.util.CustomPage;
+import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,17 +35,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
-
+import static org.mockito.ArgumentMatchers.anyInt;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
+import static org.mockito.Mockito.never;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 
 @ExtendWith(MockitoExtension.class)
 class IncidenciaServiceImplTest {
@@ -182,12 +183,40 @@ class IncidenciaServiceImplTest {
         responseBody.setIdIncidencia(1);
         responseBody.setTitulo("No enciende el equipo");
 
-        when(incidenciaRepository.obtenerIncidencia(1)).thenReturn(Optional.of(projection));
-        when(genericMapper.toResponse(projection, IncidenciaResponse.class)).thenReturn(responseBody);
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
 
-        ResponseEntity<Object> response = incidenciaService.obtenerIncidencia(1);
+        when(incidenciaRepository.findById(1))
+                .thenReturn(Optional.of(incidencia));
+        when(usuarioRepository.countUsuarioByRolId(1, 1))
+                .thenReturn(1);
+        when(incidenciaRepository.obtenerIncidencia(1))
+                .thenReturn(Optional.of(projection));
+        when(genericMapper.toResponse(projection, IncidenciaResponse.class))
+                .thenReturn(responseBody);
+
+        ResponseEntity<Object> response =
+                incidenciaService.obtenerIncidencia(1, 1);
 
         assertEquals(200, response.getStatusCode().value());
+    }
+
+    @Test
+    void obtenerIncidenciaDebeProhibirReportanteAjeno() {
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+
+        when(incidenciaRepository.findById(1))
+                .thenReturn(Optional.of(incidencia));
+
+        when(usuarioRepository.countUsuarioByRolId(anyInt(), anyInt()))
+                .thenAnswer(invocation -> {
+                    Integer idRol = invocation.getArgument(1);
+                    return Integer.valueOf(4).equals(idRol) ? 1 : 0;
+                });
+
+        ResponseEntity<Object> response =
+                incidenciaService.obtenerIncidencia(1, 4);
+
+        assertEquals(403, response.getStatusCode().value());
     }
 
     @Test
@@ -279,31 +308,45 @@ class IncidenciaServiceImplTest {
 
     @Test
     void cerrarIncidenciaDebeResponderOk() {
-        ActualizarEstadoIncidenciaRequest request = new ActualizarEstadoIncidenciaRequest();
+        ActualizarEstadoIncidenciaRequest request =
+                new ActualizarEstadoIncidenciaRequest();
+
         request.setIdIncidencia(1);
         request.setIdUsuario(4);
 
-        when(usuarioRepository.countUsuarioByRolId(4, 5)).thenReturn(1);
-        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, null)));
-        when(estadoIncidenciaRepository.findById(7))
-            .thenReturn(Optional.of(estado(7, "CERRADA")));
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+        incidencia.setIdEstado(6);
 
-        ResponseEntity<Object> response = incidenciaService.cerrarIncidencia(request);
+        when(usuarioRepository.countUsuarioByRolId(4, 5))
+                .thenReturn(1);
+
+        when(incidenciaRepository.findById(1))
+                .thenReturn(Optional.of(incidencia));
+
+        when(estadoIncidenciaRepository.findById(7))
+                .thenReturn(Optional.of(estado(7, "CERRADA")));
+
+        ResponseEntity<Object> response =
+                incidenciaService.cerrarIncidencia(request);
 
         assertEquals(200, response.getStatusCode().value());
-        verify(incidenciaRepository).save(any(IncidenciaEntity.class));
+        assertEquals(7, incidencia.getIdEstado());
+
+        verify(incidenciaRepository)
+                .save(any(IncidenciaEntity.class));
     }
 
     @Test
     void registrarEvidenciaDebeResponderOk() {
         RegistrarEvidenciaRequest request = new RegistrarEvidenciaRequest();
         request.setIdIncidencia(1);
-        request.setIdUsuario(2);
+        request.setIdUsuario(1);
         request.setNombreArchivo("captura.png");
         request.setRutaArchivo("/evidencias/captura.png");
 
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, null)));
-        when(usuarioRepository.existsById(2)).thenReturn(true);
+        when(usuarioRepository.countUsuarioByRolId(1, 1)).thenReturn(1);
+        when(usuarioRepository.existsById(1)).thenReturn(true);
 
         ResponseEntity<Object> response = incidenciaService.registrarEvidencia(request);
 
@@ -338,5 +381,84 @@ class IncidenciaServiceImplTest {
         CustomPage<IncidenciaResponse> result = incidenciaService.listarIncidenciasVencidas(1, 10);
 
         assertEquals(0, result.getData().size());
+    }
+
+    @Test
+    void cerrarIncidenciaDebeRechazarEstadoNoResuelto() {
+        ActualizarEstadoIncidenciaRequest request =
+                new ActualizarEstadoIncidenciaRequest();
+
+        request.setIdIncidencia(1);
+        request.setIdUsuario(4);
+
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+        incidencia.setIdEstado(4);
+
+        when(usuarioRepository.countUsuarioByRolId(4, 5))
+                .thenReturn(1);
+
+        when(incidenciaRepository.findById(1))
+                .thenReturn(Optional.of(incidencia));
+
+        ResponseEntity<Object> response =
+                incidenciaService.cerrarIncidencia(request);
+
+        assertEquals(400, response.getStatusCode().value());
+
+        verify(incidenciaRepository, never())
+                .save(any(IncidenciaEntity.class));
+    }
+
+    @Test
+    void cerrarIncidenciaDebeRechazarUsuarioNoSupervisor() {
+        ActualizarEstadoIncidenciaRequest request =
+                new ActualizarEstadoIncidenciaRequest();
+
+        request.setIdIncidencia(1);
+        request.setIdUsuario(4);
+
+        when(usuarioRepository.countUsuarioByRolId(4, 5))
+                .thenReturn(0);
+
+        ResponseEntity<Object> response =
+                incidenciaService.cerrarIncidencia(request);
+
+        assertEquals(403, response.getStatusCode().value());
+
+        verify(incidenciaRepository, never())
+                .findById(any());
+    }
+
+    @Test
+    void buscarIncidenciasPorTituloDebeRetornarProyeccionDto() {
+        IncidenciaBusquedaResponse response =
+                new IncidenciaBusquedaResponse(
+                        1,
+                        "INC-001",
+                        "Equipo no enciende",
+                        LocalDateTime.of(2026, 10, 3, 10, 30)
+                );
+
+        when(incidenciaRepository.buscarResumenPorTitulo("equipo"))
+                .thenReturn(List.of(response));
+
+        List<IncidenciaBusquedaResponse> resultado =
+                incidenciaService.buscarIncidenciasPorTitulo(
+                        " equipo "
+                );
+
+        assertEquals(1, resultado.size());
+        assertEquals("INC-001", resultado.get(0).getCodigo());
+        assertEquals(
+                "Equipo no enciende",
+                resultado.get(0).getTitulo()
+        );
+        assertEquals(
+                "03/10/2026 10:30",
+                resultado.get(0).getFechaRegistro()
+        );
+
+        verify(incidenciaRepository)
+                .buscarResumenPorTitulo("equipo");
     }
 }

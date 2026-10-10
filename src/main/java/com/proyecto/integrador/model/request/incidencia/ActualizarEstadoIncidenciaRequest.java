@@ -10,6 +10,5 @@ public class ActualizarEstadoIncidenciaRequest {
     @NotNull(message = "{message.required}")
     private Integer idIncidencia;
 
-    @NotNull(message = "{message.required}")
     private Integer idUsuario;
 }

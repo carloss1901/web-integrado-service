@@ -13,7 +13,6 @@ import com.proyecto.integrador.repository.UsuarioRolRepository;
 import com.proyecto.integrador.service.UsuarioService;
 import com.proyecto.integrador.util.CustomPage;
 import com.proyecto.integrador.util.MessageResponse;
-import com.proyecto.integrador.util.PasswordHashUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.time.LocalDateTime;
@@ -39,6 +38,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Autowired
     private RolRepository rolRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional(readOnly = true)
@@ -104,7 +106,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setNombres(request.getNombres());
         usuario.setApellidos(request.getApellidos());
         usuario.setCorreo(request.getCorreo());
-        usuario.setPassword(PasswordHashUtil.hash(request.getPassword()));
+        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         usuario.setEstado(Boolean.TRUE);
         usuario.setActivo(Boolean.TRUE);
         usuarioRepository.save(usuario);

@@ -6,11 +6,11 @@ INSERT INTO rol (id_rol, nombre, activo) VALUES
 (5, 'SUPERVISOR', 1);
 
 INSERT INTO usuario (id_usuario, usuario, nombres, apellidos, correo, password, estado, activo) VALUES
-(1, 'admin', 'Admin', 'Sistema', 'admin@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
-(2, 'operador', 'Operador', 'Mesa Control', 'operador@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
-(3, 'responsable', 'Responsable', 'Atencion', 'responsable@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
-(4, 'reportante', 'Usuario', 'Reportante', 'reportante@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1),
-(5, 'supervisor', 'Supervisor', 'Incidencias', 'supervisor@demo.com', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, 1);
+(1, 'admin', 'Admin', 'Sistema', 'admin@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre', 1, 1),
+(2, 'operador', 'Operador', 'Mesa Control', 'operador@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre', 1, 1),
+(3, 'responsable', 'Responsable', 'Atencion', 'responsable@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre', 1, 1),
+(4, 'reportante', 'Usuario', 'Reportante', 'reportante@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre', 1, 1),
+(5, 'supervisor', 'Supervisor', 'Incidencias', 'supervisor@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre', 1, 1);
 
 INSERT INTO usuario_rol (id_usuario_rol, id_usuario, id_rol, estado, activo) VALUES
 (1, 1, 1, 1, 1),
