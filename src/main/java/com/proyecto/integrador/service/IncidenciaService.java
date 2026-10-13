@@ -15,13 +15,30 @@ import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.util.CustomPage;
 import org.springframework.http.ResponseEntity;
-
+import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import java.util.List;
+import java.time.LocalDate;
 
 public interface IncidenciaService {
     List<IncidenciaResponse> listarIncidencias();
-    CustomPage<IncidenciaResponse> listarIncidenciasVencidas(Integer page, Integer size);
-    ResponseEntity<Object> obtenerIncidencia(Integer idIncidencia);
+    List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
+            String texto
+    );
+    List<IncidenciaBusquedaResponse> buscarIncidenciasPorFechas(
+            LocalDate inicio,
+            LocalDate fin
+    );
+    CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    );
+    ResponseEntity<Object> obtenerIncidencia(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado
+    );
     ResponseEntity<Object> registrarIncidencia(RegistrarIncidenciaRequest request);
     ResponseEntity<Object> actualizarIncidencia(ActualizarIncidenciaRequest request);
     ResponseEntity<Object> eliminarIncidencia(Integer idIncidencia);
@@ -33,8 +50,27 @@ public interface IncidenciaService {
     ResponseEntity<Object> registrarEvidencia(RegistrarEvidenciaRequest request);
     ResponseEntity<Object> registrarAccionCorrectiva(RegistrarAccionCorrectivaRequest request);
     ResponseEntity<Object> registrarComentario(RegistrarComentarioRequest request);
-    CustomPage<IncidenciaHistorialResponse> listarHistorial(Integer idIncidencia, Integer page, Integer size);
-    CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(Integer idIncidencia, Integer page, Integer size);
-    CustomPage<IncidenciaAccionCorrectivaResponse> listarAccionesCorrectivas(Integer idIncidencia, Integer page, Integer size);
-    CustomPage<IncidenciaComentarioResponse> listarComentarios(Integer idIncidencia, Integer page, Integer size);
+    CustomPage<IncidenciaHistorialResponse> listarHistorial(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    );
+    CustomPage<IncidenciaResponse> listarIncidenciasVencidas(
+            Integer page,
+            Integer size
+    );
+    CustomPage<IncidenciaAccionCorrectivaResponse> listarAccionesCorrectivas(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    );
+    CustomPage<IncidenciaComentarioResponse> listarComentarios(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    );
+    IndicadoresIncidenciaResponse obtenerIndicadores();
 }

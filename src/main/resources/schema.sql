@@ -1,5 +1,3 @@
-CREATE ALIAS IF NOT EXISTS DATE_FORMAT FOR "com.proyecto.integrador.util.H2Functions.dateFormat";
-
 DROP TABLE IF EXISTS incidencia_accion_correctiva;
 DROP TABLE IF EXISTS incidencia_comentario;
 DROP TABLE IF EXISTS incidencia_evidencia;

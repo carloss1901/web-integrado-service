@@ -13,6 +13,7 @@ import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
 import com.proyecto.integrador.model.response.IncidenciaHistorialResponse;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
+import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
 import com.proyecto.integrador.service.IncidenciaService;
 import com.proyecto.integrador.util.CustomPage;
 import jakarta.validation.Valid;
@@ -31,8 +32,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.RequestAttribute;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
+import org.springframework.format.annotation.DateTimeFormat;
+import java.time.LocalDate;
 
 @Tag(name = "Incidencia Controller")
 @Validated
@@ -48,23 +53,74 @@ public class IncidenciaController {
         return incidenciaService.listarIncidencias();
     }
 
+    @GetMapping(
+            value = "buscar",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
+            @NotBlank(message = "{message.required}")
+            @RequestParam("texto") String texto
+    ) {
+        return incidenciaService.buscarIncidenciasPorTitulo(texto);
+    }
+
+    @GetMapping(
+            value = "buscar-por-fechas",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public List<IncidenciaBusquedaResponse> buscarIncidenciasPorFechas(
+            @RequestParam("inicio")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate inicio,
+
+            @RequestParam("fin")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fin
+    ) {
+        return incidenciaService.buscarIncidenciasPorFechas(
+                inicio,
+                fin
+        );
+    }
+
     @GetMapping(value = "vencidas", produces = MediaType.APPLICATION_JSON_VALUE)
     public CustomPage<IncidenciaResponse> listarIncidenciasVencidas(
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "page", defaultValue = "1") Integer page,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "size", defaultValue = "10") Integer size
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "size", defaultValue = "10") Integer size
     ) {
-        return incidenciaService.listarIncidenciasVencidas(page, size);
+        return incidenciaService.listarIncidenciasVencidas(
+                page,
+                size
+        );
+    }
+
+    @GetMapping(
+            value = "indicadores",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public IndicadoresIncidenciaResponse obtenerIndicadores() {
+        return incidenciaService.obtenerIndicadores();
     }
 
     @GetMapping(value = "{idIncidencia}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> obtenerIncidencia(@PathVariable("idIncidencia") Integer idIncidencia) {
-        return incidenciaService.obtenerIncidencia(idIncidencia);
+    public ResponseEntity<Object> obtenerIncidencia(
+            @PathVariable("idIncidencia") Integer idIncidencia,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        return incidenciaService.obtenerIncidencia(
+                idIncidencia,
+                idUsuarioAutenticado
+        );
     }
 
     @PostMapping(value = "registrar", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> registrarIncidencia(@Valid @RequestBody RegistrarIncidenciaRequest request) {
+    public ResponseEntity<Object> registrarIncidencia(
+            @Valid @RequestBody RegistrarIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdReportante(idUsuarioAutenticado);
         return incidenciaService.registrarIncidencia(request);
     }
 
@@ -79,87 +135,142 @@ public class IncidenciaController {
     }
 
     @PostMapping(value = "clasificar", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> clasificarIncidencia(@Valid @RequestBody ClasificarIncidenciaRequest request) {
+    public ResponseEntity<Object> clasificarIncidencia(
+            @Valid @RequestBody ClasificarIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.clasificarIncidencia(request);
     }
 
     @PostMapping(value = "asignar-responsable", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> asignarResponsable(@Valid @RequestBody AsignarResponsableRequest request) {
+    public ResponseEntity<Object> asignarResponsable(
+            @Valid @RequestBody AsignarResponsableRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.asignarResponsable(request);
     }
 
     @PostMapping(value = "iniciar-atencion", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> iniciarAtencion(@Valid @RequestBody ActualizarEstadoIncidenciaRequest request) {
+    public ResponseEntity<Object> iniciarAtencion(
+            @Valid @RequestBody ActualizarEstadoIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.iniciarAtencion(request);
     }
 
     @PostMapping(value = "resolver", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> resolverIncidencia(@Valid @RequestBody ActualizarEstadoIncidenciaRequest request) {
+    public ResponseEntity<Object> resolverIncidencia(
+            @Valid @RequestBody ActualizarEstadoIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.resolverIncidencia(request);
     }
 
     @PostMapping(value = "cerrar", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> cerrarIncidencia(@Valid @RequestBody ActualizarEstadoIncidenciaRequest request) {
+    public ResponseEntity<Object> cerrarIncidencia(
+            @Valid @RequestBody ActualizarEstadoIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.cerrarIncidencia(request);
     }
 
     @PostMapping(value = "evidencias", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> registrarEvidencia(@Valid @RequestBody RegistrarEvidenciaRequest request) {
+    public ResponseEntity<Object> registrarEvidencia(
+            @Valid @RequestBody RegistrarEvidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.registrarEvidencia(request);
     }
 
     @PostMapping(value = "acciones-correctivas", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> registrarAccionCorrectiva(
-        @Valid @RequestBody RegistrarAccionCorrectivaRequest request) {
+            @Valid @RequestBody RegistrarAccionCorrectivaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.registrarAccionCorrectiva(request);
     }
 
     @PostMapping(value = "comentarios", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> registrarComentario(@Valid @RequestBody RegistrarComentarioRequest request) {
+    public ResponseEntity<Object> registrarComentario(
+            @Valid @RequestBody RegistrarComentarioRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.registrarComentario(request);
     }
 
     @GetMapping(value = "{idIncidencia}/historial", produces = MediaType.APPLICATION_JSON_VALUE)
     public CustomPage<IncidenciaHistorialResponse> listarHistorial(
-        @PathVariable("idIncidencia") Integer idIncidencia,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "page", defaultValue = "1") Integer page,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "size", defaultValue = "10") Integer size
+            @PathVariable("idIncidencia") Integer idIncidencia,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "size", defaultValue = "10") Integer size
     ) {
-        return incidenciaService.listarHistorial(idIncidencia, page, size);
+        return incidenciaService.listarHistorial(
+                idIncidencia,
+                idUsuarioAutenticado,
+                page,
+                size
+        );
     }
 
     @GetMapping(value = "{idIncidencia}/evidencias", produces = MediaType.APPLICATION_JSON_VALUE)
     public CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(
-        @PathVariable("idIncidencia") Integer idIncidencia,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "page", defaultValue = "1") Integer page,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "size", defaultValue = "10") Integer size
+            @PathVariable("idIncidencia") Integer idIncidencia,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "size", defaultValue = "10") Integer size
     ) {
-        return incidenciaService.listarEvidencias(idIncidencia, page, size);
+        return incidenciaService.listarEvidencias(
+                idIncidencia,
+                idUsuarioAutenticado,
+                page,
+                size
+        );
     }
 
     @GetMapping(value = "{idIncidencia}/acciones-correctivas", produces = MediaType.APPLICATION_JSON_VALUE)
     public CustomPage<IncidenciaAccionCorrectivaResponse> listarAccionesCorrectivas(
-        @PathVariable("idIncidencia") Integer idIncidencia,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "page", defaultValue = "1") Integer page,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "size", defaultValue = "10") Integer size
+            @PathVariable("idIncidencia") Integer idIncidencia,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "size", defaultValue = "10") Integer size
     ) {
-        return incidenciaService.listarAccionesCorrectivas(idIncidencia, page, size);
+        return incidenciaService.listarAccionesCorrectivas(
+                idIncidencia,
+                idUsuarioAutenticado,
+                page,
+                size
+        );
     }
 
     @GetMapping(value = "{idIncidencia}/comentarios", produces = MediaType.APPLICATION_JSON_VALUE)
     public CustomPage<IncidenciaComentarioResponse> listarComentarios(
-        @PathVariable("idIncidencia") Integer idIncidencia,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "page", defaultValue = "1") Integer page,
-        @Min(value = 1, message = "{message.minOne}")
-        @RequestParam(value = "size", defaultValue = "10") Integer size
+            @PathVariable("idIncidencia") Integer idIncidencia,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "size", defaultValue = "10") Integer size
     ) {
-        return incidenciaService.listarComentarios(idIncidencia, page, size);
+        return incidenciaService.listarComentarios(
+                idIncidencia,
+                idUsuarioAutenticado,
+                page,
+                size
+        );
     }
 }

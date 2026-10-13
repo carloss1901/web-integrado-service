@@ -10,33 +10,42 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface IncidenciaComentarioRepository extends JpaRepository<IncidenciaComentarioEntity, Integer> {
+public interface IncidenciaComentarioRepository
+        extends JpaRepository<IncidenciaComentarioEntity, Integer> {
 
-    @Query(value = """
-        SELECT
-            C.ID_COMENTARIO AS idComentario,
-            C.ID_INCIDENCIA AS idIncidencia,
-            C.ID_USUARIO AS idUsuario,
-            CONCAT(U.NOMBRES, ' ', U.APELLIDOS) AS usuario,
-            R.NOMBRE AS rol,
-            C.COMENTARIO AS comentario,
-            FORMATDATETIME(C.FECHA_REGISTRO, 'dd/MM/yyyy HH:mm') AS fechaRegistro
-        FROM INCIDENCIA_COMENTARIO C
-        INNER JOIN USUARIO U ON U.ID_USUARIO = C.ID_USUARIO
-        LEFT JOIN USUARIO_ROL UR ON UR.ID_USUARIO = U.ID_USUARIO
-            AND UR.ACTIVO = TRUE AND UR.ESTADO = TRUE
-        LEFT JOIN ROL R ON R.ID_ROL = UR.ID_ROL AND R.ACTIVO = TRUE
-        WHERE C.ID_INCIDENCIA = :idIncidencia
-        AND C.ACTIVO = TRUE
-        ORDER BY C.FECHA_REGISTRO
-        """,
-        countQuery = """
-        SELECT COUNT(1)
-        FROM INCIDENCIA_COMENTARIO C
-        WHERE C.ID_INCIDENCIA = :idIncidencia
-        AND C.ACTIVO = TRUE
-        """,
-        nativeQuery = true)
-    Page<IncidenciaComentarioProjection> listarComentarios(@Param("idIncidencia") Integer idIncidencia,
-                                                           Pageable pageable);
+    @Query(
+            value = """
+            SELECT
+                c.idComentario AS idComentario,
+                c.idIncidencia AS idIncidencia,
+                c.idUsuario AS idUsuario,
+                CONCAT(CONCAT(u.nombres, ' '), u.apellidos) AS usuario,
+                r.nombre AS rol,
+                c.comentario AS comentario,
+                CAST(c.fechaRegistro AS string) AS fechaRegistro
+            FROM IncidenciaComentarioEntity c
+            JOIN UsuarioEntity u
+              ON u.idUsuario = c.idUsuario
+            LEFT JOIN UsuarioRolEntity ur
+              ON ur.idUsuario = u.idUsuario
+             AND ur.activo = true
+             AND ur.estado = true
+            LEFT JOIN RolEntity r
+              ON r.idRol = ur.idRol
+             AND r.activo = true
+            WHERE c.idIncidencia = :idIncidencia
+              AND c.activo = true
+            ORDER BY c.fechaRegistro
+            """,
+            countQuery = """
+            SELECT COUNT(c)
+            FROM IncidenciaComentarioEntity c
+            WHERE c.idIncidencia = :idIncidencia
+              AND c.activo = true
+            """
+    )
+    Page<IncidenciaComentarioProjection> listarComentarios(
+            @Param("idIncidencia") Integer idIncidencia,
+            Pageable pageable
+    );
 }

@@ -10,33 +10,42 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface IncidenciaAccionCorrectivaRepository extends JpaRepository<IncidenciaAccionCorrectivaEntity, Integer> {
+public interface IncidenciaAccionCorrectivaRepository
+        extends JpaRepository<IncidenciaAccionCorrectivaEntity, Integer> {
 
-    @Query(value = """
-        SELECT
-            A.ID_ACCION_CORRECTIVA AS idAccionCorrectiva,
-            A.ID_INCIDENCIA AS idIncidencia,
-            A.ID_USUARIO AS idUsuario,
-            CONCAT(U.NOMBRES, ' ', U.APELLIDOS) AS usuario,
-            R.NOMBRE AS rol,
-            A.DESCRIPCION AS descripcion,
-            FORMATDATETIME(A.FECHA_REGISTRO, 'dd/MM/yyyy HH:mm') AS fechaRegistro
-        FROM INCIDENCIA_ACCION_CORRECTIVA A
-        INNER JOIN USUARIO U ON U.ID_USUARIO = A.ID_USUARIO
-        LEFT JOIN USUARIO_ROL UR ON UR.ID_USUARIO = U.ID_USUARIO
-            AND UR.ACTIVO = TRUE AND UR.ESTADO = TRUE
-        LEFT JOIN ROL R ON R.ID_ROL = UR.ID_ROL AND R.ACTIVO = TRUE
-        WHERE A.ID_INCIDENCIA = :idIncidencia
-        AND A.ACTIVO = TRUE
-        ORDER BY A.FECHA_REGISTRO
-        """,
-        countQuery = """
-        SELECT COUNT(1)
-        FROM INCIDENCIA_ACCION_CORRECTIVA A
-        WHERE A.ID_INCIDENCIA = :idIncidencia
-        AND A.ACTIVO = TRUE
-        """,
-        nativeQuery = true)
-    Page<IncidenciaAccionCorrectivaProjection> listarAccionesCorrectivas(@Param("idIncidencia") Integer idIncidencia,
-                                                                         Pageable pageable);
+    @Query(
+            value = """
+            SELECT
+                a.idAccionCorrectiva AS idAccionCorrectiva,
+                a.idIncidencia AS idIncidencia,
+                a.idUsuario AS idUsuario,
+                CONCAT(CONCAT(u.nombres, ' '), u.apellidos) AS usuario,
+                r.nombre AS rol,
+                a.descripcion AS descripcion,
+                CAST(a.fechaRegistro AS string) AS fechaRegistro
+            FROM IncidenciaAccionCorrectivaEntity a
+            JOIN UsuarioEntity u
+              ON u.idUsuario = a.idUsuario
+            LEFT JOIN UsuarioRolEntity ur
+              ON ur.idUsuario = u.idUsuario
+             AND ur.activo = true
+             AND ur.estado = true
+            LEFT JOIN RolEntity r
+              ON r.idRol = ur.idRol
+             AND r.activo = true
+            WHERE a.idIncidencia = :idIncidencia
+              AND a.activo = true
+            ORDER BY a.fechaRegistro
+            """,
+            countQuery = """
+            SELECT COUNT(a)
+            FROM IncidenciaAccionCorrectivaEntity a
+            WHERE a.idIncidencia = :idIncidencia
+              AND a.activo = true
+            """
+    )
+    Page<IncidenciaAccionCorrectivaProjection> listarAccionesCorrectivas(
+            @Param("idIncidencia") Integer idIncidencia,
+            Pageable pageable
+    );
 }

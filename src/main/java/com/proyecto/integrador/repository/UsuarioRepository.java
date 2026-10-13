@@ -14,91 +14,166 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Integer> {
+public interface UsuarioRepository
+        extends JpaRepository<UsuarioEntity, Integer> {
 
     Optional<UsuarioEntity> findByUsuarioIgnoreCase(String usuario);
 
-    @Query(value = """
-        SELECT
-            U.ID_USUARIO AS idUsuario,
-            U.USUARIO AS usuario,
-            U.NOMBRES AS nombres,
-            U.APELLIDOS AS apellidos,
-            U.CORREO AS correo,
-            U.ACTIVO AS activo,
-            CASE WHEN U.ACTIVO = TRUE THEN 'ACTIVO' ELSE 'INACTIVO' END AS estadoDsc,
-            COALESCE(GROUP_CONCAT(R.NOMBRE ORDER BY R.NOMBRE SEPARATOR ', '), '') AS roles,
-            FORMATDATETIME(U.FEC_REG, 'dd/MM/yyyy HH:mm') AS fecRegistro,
-            FORMATDATETIME(U.FEC_MOD, 'dd/MM/yyyy HH:mm') AS fecModificacion
-        FROM USUARIO U
-        LEFT JOIN USUARIO_ROL UR ON UR.ID_USUARIO = U.ID_USUARIO
-            AND UR.ACTIVO = TRUE
-            AND UR.ESTADO = TRUE
-        LEFT JOIN ROL R ON R.ID_ROL = UR.ID_ROL
-            AND R.ACTIVO = TRUE
-        WHERE (:#{#rq.usuario} IS NULL OR :#{#rq.usuario} = '' OR LOWER(U.USUARIO)
-            LIKE LOWER(CONCAT('%', :#{#rq.usuario}, '%')))
-        AND (:#{#rq.nombres} IS NULL OR :#{#rq.nombres} = '' OR LOWER(U.NOMBRES)
-            LIKE LOWER(CONCAT('%', :#{#rq.nombres}, '%')))
-        AND (:#{#rq.apellidos} IS NULL OR :#{#rq.apellidos} = '' OR LOWER(U.APELLIDOS)
-            LIKE LOWER(CONCAT('%', :#{#rq.apellidos}, '%')))
-        AND (:#{#rq.correo} IS NULL OR :#{#rq.correo} = '' OR LOWER(U.CORREO)
-            LIKE LOWER(CONCAT('%', :#{#rq.correo}, '%')))
-        AND (:#{#rq.estado} IS NULL OR U.ACTIVO = :#{#rq.estado})
-        GROUP BY U.ID_USUARIO, U.USUARIO, U.NOMBRES, U.APELLIDOS, U.CORREO, U.ACTIVO, U.FEC_REG, U.FEC_MOD
-        ORDER BY U.ID_USUARIO DESC
-        """,
-        countQuery = """
-        SELECT COUNT(1)
-        FROM USUARIO U
-        WHERE (:#{#rq.usuario} IS NULL OR :#{#rq.usuario} = '' OR LOWER(U.USUARIO)
-            LIKE LOWER(CONCAT('%', :#{#rq.usuario}, '%')))
-        AND (:#{#rq.nombres} IS NULL OR :#{#rq.nombres} = '' OR LOWER(U.NOMBRES)
-            LIKE LOWER(CONCAT('%', :#{#rq.nombres}, '%')))
-        AND (:#{#rq.apellidos} IS NULL OR :#{#rq.apellidos} = '' OR LOWER(U.APELLIDOS)
-            LIKE LOWER(CONCAT('%', :#{#rq.apellidos}, '%')))
-        AND (:#{#rq.correo} IS NULL OR :#{#rq.correo} = '' OR LOWER(U.CORREO)
-            LIKE LOWER(CONCAT('%', :#{#rq.correo}, '%')))
-        AND (:#{#rq.estado} IS NULL OR U.ACTIVO = :#{#rq.estado})
-        """,
-        nativeQuery = true)
+    @Query(
+            value = """
+            SELECT
+                u.idUsuario AS idUsuario,
+                u.usuario AS usuario,
+                u.nombres AS nombres,
+                u.apellidos AS apellidos,
+                u.correo AS correo,
+                u.activo AS activo,
+                CASE
+                    WHEN u.activo = true THEN 'ACTIVO'
+                    ELSE 'INACTIVO'
+                END AS estadoDsc,
+                COALESCE(
+                    FUNCTION('STRING_AGG', r.nombre, ', '),
+                    ''
+                ) AS roles,
+                CAST(u.fecReg AS string) AS fecRegistro,
+                CAST(u.fecMod AS string) AS fecModificacion
+            FROM UsuarioEntity u
+            LEFT JOIN UsuarioRolEntity ur
+                ON ur.idUsuario = u.idUsuario
+                AND ur.activo = true
+                AND ur.estado = true
+            LEFT JOIN RolEntity r
+                ON r.idRol = ur.idRol
+                AND r.activo = true
+            WHERE (
+                :#{#rq.usuario} IS NULL
+                OR :#{#rq.usuario} = ''
+                OR LOWER(u.usuario) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.usuario}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.nombres} IS NULL
+                OR :#{#rq.nombres} = ''
+                OR LOWER(u.nombres) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.nombres}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.apellidos} IS NULL
+                OR :#{#rq.apellidos} = ''
+                OR LOWER(u.apellidos) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.apellidos}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.correo} IS NULL
+                OR :#{#rq.correo} = ''
+                OR LOWER(u.correo) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.correo}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.estado} IS NULL
+                OR u.activo = :#{#rq.estado}
+            )
+            GROUP BY
+                u.idUsuario,
+                u.usuario,
+                u.nombres,
+                u.apellidos,
+                u.correo,
+                u.activo,
+                u.fecReg,
+                u.fecMod
+            ORDER BY u.idUsuario DESC
+            """,
+            countQuery = """
+            SELECT COUNT(u)
+            FROM UsuarioEntity u
+            WHERE (
+                :#{#rq.usuario} IS NULL
+                OR :#{#rq.usuario} = ''
+                OR LOWER(u.usuario) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.usuario}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.nombres} IS NULL
+                OR :#{#rq.nombres} = ''
+                OR LOWER(u.nombres) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.nombres}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.apellidos} IS NULL
+                OR :#{#rq.apellidos} = ''
+                OR LOWER(u.apellidos) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.apellidos}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.correo} IS NULL
+                OR :#{#rq.correo} = ''
+                OR LOWER(u.correo) LIKE LOWER(
+                    CONCAT('%', CONCAT(:#{#rq.correo}, '%'))
+                )
+            )
+            AND (
+                :#{#rq.estado} IS NULL
+                OR u.activo = :#{#rq.estado}
+            )
+            """
+    )
     Page<UsuarioProjection> listarUsuario(
-        @Param("rq") ListarUsuarioRequest rq,
-        @PageableDefault(page = 0, size = 10) Pageable pageable
+            @Param("rq") ListarUsuarioRequest rq,
+            @PageableDefault(page = 0, size = 10) Pageable pageable
     );
 
     Boolean existsByUsuarioIgnoreCase(String usuario);
 
     Boolean existsByCorreoIgnoreCase(String correo);
 
-    @Query(value = """
-        SELECT COUNT(1)
-        FROM USUARIO
-        WHERE UPPER(USUARIO) = UPPER(:usuario)
-        AND ID_USUARIO <> :idUsuario
-        """, nativeQuery = true)
-    Integer countByUsuarioAndIdUsuarioNot(@Param("usuario") String usuario, @Param("idUsuario") Integer idUsuario);
+    @Query("""
+        SELECT COUNT(u)
+        FROM UsuarioEntity u
+        WHERE UPPER(u.usuario) = UPPER(:usuario)
+          AND u.idUsuario <> :idUsuario
+        """)
+    Integer countByUsuarioAndIdUsuarioNot(
+            @Param("usuario") String usuario,
+            @Param("idUsuario") Integer idUsuario
+    );
 
-    @Query(value = """
-        SELECT COUNT(1)
-        FROM USUARIO
-        WHERE UPPER(CORREO) = UPPER(:correo)
-        AND ID_USUARIO <> :idUsuario
-        """, nativeQuery = true)
-    Integer countByCorreoAndIdUsuarioNot(@Param("correo") String correo, @Param("idUsuario") Integer idUsuario);
+    @Query("""
+        SELECT COUNT(u)
+        FROM UsuarioEntity u
+        WHERE UPPER(u.correo) = UPPER(:correo)
+          AND u.idUsuario <> :idUsuario
+        """)
+    Integer countByCorreoAndIdUsuarioNot(
+            @Param("correo") String correo,
+            @Param("idUsuario") Integer idUsuario
+    );
 
-    @Query(value = """
-        SELECT COUNT(1)
-        FROM USUARIO U
-        INNER JOIN USUARIO_ROL UR ON UR.ID_USUARIO = U.ID_USUARIO
-        INNER JOIN ROL R ON R.ID_ROL = UR.ID_ROL
-        WHERE U.ID_USUARIO = :idUsuario
-        AND U.ESTADO = TRUE
-        AND U.ACTIVO = TRUE
-        AND UR.ESTADO = TRUE
-        AND UR.ACTIVO = TRUE
-        AND R.ACTIVO = TRUE
-        AND R.ID_ROL = :idRol
-        """, nativeQuery = true)
-    Integer countUsuarioByRolId(@Param("idUsuario") Integer idUsuario, @Param("idRol") Integer idRol);
+    @Query("""
+        SELECT COUNT(ur)
+        FROM UsuarioEntity u
+        JOIN UsuarioRolEntity ur
+          ON ur.idUsuario = u.idUsuario
+        JOIN RolEntity r
+          ON r.idRol = ur.idRol
+        WHERE u.idUsuario = :idUsuario
+          AND u.estado = true
+          AND u.activo = true
+          AND ur.estado = true
+          AND ur.activo = true
+          AND r.activo = true
+          AND r.idRol = :idRol
+        """)
+    Integer countUsuarioByRolId(
+            @Param("idUsuario") Integer idUsuario,
+            @Param("idRol") Integer idRol
+    );
 }

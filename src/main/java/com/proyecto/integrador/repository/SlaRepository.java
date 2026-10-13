@@ -9,13 +9,16 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SlaRepository extends JpaRepository<SlaEntity, Integer> {
+public interface SlaRepository
+        extends JpaRepository<SlaEntity, Integer> {
 
-    @Query(value = """
-        SELECT *
-        FROM SLA
-        WHERE ID_SEVERIDAD = :idSeveridad
-        AND ACTIVO = TRUE
-        """, nativeQuery = true)
-    Optional<SlaEntity> findActivoByIdSeveridad(@Param("idSeveridad") Integer idSeveridad);
+    @Query("""
+        SELECT s
+        FROM SlaEntity s
+        WHERE s.idSeveridad = :idSeveridad
+          AND s.activo = true
+        """)
+    Optional<SlaEntity> findActivoByIdSeveridad(
+            @Param("idSeveridad") Integer idSeveridad
+    );
 }

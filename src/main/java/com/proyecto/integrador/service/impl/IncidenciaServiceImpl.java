@@ -46,10 +46,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.server.ResponseStatusException;
+import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.time.LocalDate;
 
 @Service
 public class IncidenciaServiceImpl implements IncidenciaService {
@@ -58,7 +61,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     private static final int ROL_OPERADOR = 2;
     private static final int ROL_RESPONSABLE = 3;
     private static final int ROL_SUPERVISOR = 5;
-
+    private static final int ROL_ADMINISTRADOR = 1;
     private static final int ESTADO_REGISTRADA = 1;
     private static final int ESTADO_CLASIFICADA = 2;
     private static final int ESTADO_ASIGNADA = 3;
@@ -113,6 +116,52 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional(readOnly = true)
+    public IndicadoresIncidenciaResponse obtenerIndicadores() {
+        return incidenciaRepository.obtenerIndicadores();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
+            String texto
+    ) {
+        String textoBusqueda = texto == null
+                ? ""
+                : texto.trim();
+
+        return incidenciaRepository.buscarResumenPorTitulo(
+                textoBusqueda
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidenciaBusquedaResponse> buscarIncidenciasPorFechas(
+            LocalDate inicio,
+            LocalDate fin
+    ) {
+        if (inicio.isAfter(fin)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "La fecha inicial no puede ser posterior a la fecha final"
+            );
+        }
+
+        LocalDateTime fechaInicio = inicio.atStartOfDay();
+
+        LocalDateTime fechaFin = fin
+                .plusDays(1)
+                .atStartOfDay()
+                .minusNanos(1);
+
+        return incidenciaRepository.buscarPorRangoFechas(
+                fechaInicio,
+                fechaFin
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public CustomPage<IncidenciaResponse> listarIncidenciasVencidas(Integer page, Integer size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return mapearPagina(incidenciaRepository.listarIncidenciasVencidas(pageable),
@@ -121,11 +170,31 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional(readOnly = true)
-    public ResponseEntity<Object> obtenerIncidencia(Integer idIncidencia) {
+    public ResponseEntity<Object> obtenerIncidencia(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado
+    ) {
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(idIncidencia);
+
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+
+        if (!puedeConsultarIncidencia(idUsuarioAutenticado, incidencia)) {
+            return errorForbidden("No tiene permiso para consultar esta incidencia");
+        }
+
         return incidenciaRepository.obtenerIncidencia(idIncidencia)
-            .map(projection -> MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Proceso exitoso",
-                genericMapper.toResponse(projection, IncidenciaResponse.class)))
-            .orElseGet(() -> errorNotFound("La incidencia no existe"));
+                .map(projection -> MessageResponse.setResponse(
+                        Boolean.TRUE,
+                        HttpStatus.OK,
+                        "Proceso exitoso",
+                        genericMapper.toResponse(
+                                projection,
+                                IncidenciaResponse.class
+                        )
+                ))
+                .orElseGet(() -> errorNotFound("La incidencia no existe"));
     }
 
     @Override
@@ -292,26 +361,53 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional
-    public ResponseEntity<Object> cerrarIncidencia(ActualizarEstadoIncidenciaRequest request) {
-        if (!tieneRol(request.getIdUsuario(), ROL_SUPERVISOR) && !tieneRol(request.getIdUsuario(), ROL_REPORTANTE)) {
-            return error("El usuario no tiene rol autorizado para cerrar incidencias");
+    public ResponseEntity<Object> cerrarIncidencia(
+            ActualizarEstadoIncidenciaRequest request
+    ) {
+        if (!tieneRol(request.getIdUsuario(), ROL_SUPERVISOR)) {
+            return errorForbidden(
+                    "Solo un supervisor puede cerrar incidencias"
+            );
         }
 
-        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        IncidenciaEntity incidencia =
+                obtenerIncidenciaActiva(request.getIdIncidencia());
+
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
 
+        if (!Integer.valueOf(ESTADO_RESUELTA)
+                .equals(incidencia.getIdEstado())) {
+            return error(
+                    "Solo se puede cerrar una incidencia resuelta"
+            );
+        }
+
         String estadoAnterior = valor(incidencia.getIdEstado());
-        incidencia.setIdEstado(obtenerEstado(ESTADO_CERRADA).getIdEstado());
+
+        incidencia.setIdEstado(
+                obtenerEstado(ESTADO_CERRADA).getIdEstado()
+        );
         incidencia.setFechaCierre(LocalDateTime.now());
         incidencia.setFecMod(LocalDateTime.now());
+
         incidenciaRepository.save(incidencia);
 
-        registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "CIERRE",
-            estadoAnterior, incidencia.getIdEstado().toString(), "Cierre definitivo de incidencia");
+        registrarHistorial(
+                incidencia.getIdIncidencia(),
+                request.getIdUsuario(),
+                "CIERRE",
+                estadoAnterior,
+                incidencia.getIdEstado().toString(),
+                "Cierre definitivo de incidencia"
+        );
 
-        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia cerrada correctamente");
+        return MessageResponse.setResponse(
+                Boolean.TRUE,
+                HttpStatus.OK,
+                "Incidencia cerrada correctamente"
+        );
     }
 
     @Override
@@ -323,6 +419,11 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         }
         if (!usuarioRepository.existsById(request.getIdUsuario())) {
             return error("El usuario no existe");
+        }
+        if (!puedeConsultarIncidencia(request.getIdUsuario(), incidencia)) {
+            return errorForbidden(
+                    "No tiene permiso para registrar evidencias en esta incidencia"
+            );
         }
 
         IncidenciaEvidenciaEntity evidencia = new IncidenciaEvidenciaEntity();
@@ -347,6 +448,11 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
+        }
+        if (!puedeConsultarIncidencia(request.getIdUsuario(), incidencia)) {
+            return errorForbidden(
+                    "No tiene permiso para registrar acciones correctivas en esta incidencia"
+            );
         }
         if (!usuarioRepository.existsById(request.getIdUsuario())) {
             return error("El usuario no existe");
@@ -373,6 +479,11 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
+        if (!puedeConsultarIncidencia(request.getIdUsuario(), incidencia)) {
+            return errorForbidden(
+                    "No tiene permiso para comentar esta incidencia"
+            );
+        }
         if (!usuarioRepository.existsById(request.getIdUsuario())) {
             return error("El usuario no existe");
         }
@@ -393,35 +504,103 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional(readOnly = true)
-    public CustomPage<IncidenciaHistorialResponse> listarHistorial(Integer idIncidencia, Integer page, Integer size) {
+    public CustomPage<IncidenciaHistorialResponse> listarHistorial(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    ) {
+        validarAccesoConsulta(
+                idIncidencia,
+                idUsuarioAutenticado
+        );
+
         Pageable pageable = PageRequest.of(page - 1, size);
-        return mapearPagina(incidenciaHistorialRepository.listarHistorial(idIncidencia, pageable),
-            pageable, IncidenciaHistorialResponse.class);
+
+        return mapearPagina(
+                incidenciaHistorialRepository.listarHistorial(
+                        idIncidencia,
+                        pageable
+                ),
+                pageable,
+                IncidenciaHistorialResponse.class
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(Integer idIncidencia, Integer page, Integer size) {
+    public CustomPage<IncidenciaEvidenciaResponse> listarEvidencias(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    ) {
+        validarAccesoConsulta(
+                idIncidencia,
+                idUsuarioAutenticado
+        );
+
         Pageable pageable = PageRequest.of(page - 1, size);
-        return mapearPagina(incidenciaEvidenciaRepository.listarEvidencias(idIncidencia, pageable),
-            pageable, IncidenciaEvidenciaResponse.class);
+
+        return mapearPagina(
+                incidenciaEvidenciaRepository.listarEvidencias(
+                        idIncidencia,
+                        pageable
+                ),
+                pageable,
+                IncidenciaEvidenciaResponse.class
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CustomPage<IncidenciaAccionCorrectivaResponse> listarAccionesCorrectivas(Integer idIncidencia,
-                                                                                    Integer page, Integer size) {
+    public CustomPage<IncidenciaAccionCorrectivaResponse> listarAccionesCorrectivas(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    ) {
+        validarAccesoConsulta(
+                idIncidencia,
+                idUsuarioAutenticado
+        );
+
         Pageable pageable = PageRequest.of(page - 1, size);
-        return mapearPagina(incidenciaAccionCorrectivaRepository.listarAccionesCorrectivas(idIncidencia, pageable),
-            pageable, IncidenciaAccionCorrectivaResponse.class);
+
+        return mapearPagina(
+                incidenciaAccionCorrectivaRepository
+                        .listarAccionesCorrectivas(
+                                idIncidencia,
+                                pageable
+                        ),
+                pageable,
+                IncidenciaAccionCorrectivaResponse.class
+        );
     }
 
     @Override
     @Transactional(readOnly = true)
-    public CustomPage<IncidenciaComentarioResponse> listarComentarios(Integer idIncidencia, Integer page, Integer size) {
+    public CustomPage<IncidenciaComentarioResponse> listarComentarios(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado,
+            Integer page,
+            Integer size
+    ) {
+        validarAccesoConsulta(
+                idIncidencia,
+                idUsuarioAutenticado
+        );
+
         Pageable pageable = PageRequest.of(page - 1, size);
-        return mapearPagina(incidenciaComentarioRepository.listarComentarios(idIncidencia, pageable),
-            pageable, IncidenciaComentarioResponse.class);
+
+        return mapearPagina(
+                incidenciaComentarioRepository.listarComentarios(
+                        idIncidencia,
+                        pageable
+                ),
+                pageable,
+                IncidenciaComentarioResponse.class
+        );
     }
 
     private <P, T> CustomPage<T> mapearPagina(Page<P> result, Pageable pageable, Class<T> targetClass) {
@@ -464,6 +643,59 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             estadoAnterior, incidencia.getIdEstado().toString(), descripcion);
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, descripcion);
+    }
+
+    private void validarAccesoConsulta(
+            Integer idIncidencia,
+            Integer idUsuarioAutenticado
+    ) {
+        IncidenciaEntity incidencia =
+                obtenerIncidenciaActiva(idIncidencia);
+
+        if (incidencia == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "La incidencia no existe"
+            );
+        }
+
+        if (!puedeConsultarIncidencia(
+                idUsuarioAutenticado,
+                incidencia
+        )) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "No tiene permiso para consultar esta incidencia"
+            );
+        }
+    }
+
+    private boolean puedeConsultarIncidencia(
+            Integer idUsuario,
+            IncidenciaEntity incidencia
+    ) {
+        if (incidencia == null || idUsuario == null) {
+            return false;
+        }
+
+        boolean accesoGeneral =
+                tieneRol(idUsuario, ROL_ADMINISTRADOR)
+                        || tieneRol(idUsuario, ROL_OPERADOR)
+                        || tieneRol(idUsuario, ROL_SUPERVISOR);
+
+        if (accesoGeneral) {
+            return true;
+        }
+
+        boolean esReportantePropietario =
+                tieneRol(idUsuario, ROL_REPORTANTE)
+                        && idUsuario.equals(incidencia.getIdReportante());
+
+        boolean esResponsableAsignado =
+                tieneRol(idUsuario, ROL_RESPONSABLE)
+                        && idUsuario.equals(incidencia.getIdResponsable());
+
+        return esReportantePropietario || esResponsableAsignado;
     }
 
     private boolean tieneRol(Integer idUsuario, int idRol) {
@@ -520,6 +752,14 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     private ResponseEntity<Object> error(String mensaje) {
         return MessageResponse.setResponse(Boolean.FALSE, HttpStatus.BAD_REQUEST, mensaje);
+    }
+
+    private ResponseEntity<Object> errorForbidden(String mensaje) {
+        return MessageResponse.setResponse(
+                Boolean.FALSE,
+                HttpStatus.FORBIDDEN,
+                mensaje
+        );
     }
 
     private ResponseEntity<Object> errorNotFound(String mensaje) {

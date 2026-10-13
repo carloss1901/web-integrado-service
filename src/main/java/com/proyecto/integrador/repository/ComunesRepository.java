@@ -11,74 +11,73 @@ import java.util.List;
 @Repository
 public interface ComunesRepository extends JpaRepository<RolEntity, Integer> {
 
-    @Query(value = """
-        SELECT
-            ID_ROL AS maestroId,
-            NOMBRE AS descripcion
-        FROM ROL
-        WHERE ACTIVO = TRUE
-        ORDER BY NOMBRE
-        """, nativeQuery = true)
+    @Query("""
+        SELECT r.idRol AS maestroId,
+               r.nombre AS descripcion
+        FROM RolEntity r
+        WHERE r.activo = true
+        ORDER BY r.nombre
+        """)
     List<MaestroProjection> listarRoles();
 
-    @Query(value = """
-        SELECT
-            ID_CATEGORIA AS maestroId,
-            NOMBRE AS descripcion
-        FROM CATEGORIA
-        WHERE ACTIVO = TRUE
-        ORDER BY NOMBRE
-        """, nativeQuery = true)
+    @Query("""
+        SELECT c.idCategoria AS maestroId,
+               c.nombre AS descripcion
+        FROM CategoriaEntity c
+        WHERE c.activo = true
+        ORDER BY c.nombre
+        """)
     List<MaestroProjection> listarCategorias();
 
-    @Query(value = """
-        SELECT
-            ID_UBICACION AS maestroId,
-            NOMBRE AS descripcion
-        FROM UBICACION
-        WHERE ACTIVO = TRUE
-        ORDER BY NOMBRE
-        """, nativeQuery = true)
+    @Query("""
+        SELECT u.idUbicacion AS maestroId,
+               u.nombre AS descripcion
+        FROM UbicacionEntity u
+        WHERE u.activo = true
+        ORDER BY u.nombre
+        """)
     List<MaestroProjection> listarUbicaciones();
 
-    @Query(value = """
-        SELECT
-            ID_SEVERIDAD AS maestroId,
-            NOMBRE AS descripcion
-        FROM SEVERIDAD
-        WHERE ACTIVO = TRUE
-        ORDER BY NIVEL
-        """, nativeQuery = true)
+    @Query("""
+        SELECT s.idSeveridad AS maestroId,
+               s.nombre AS descripcion
+        FROM SeveridadEntity s
+        WHERE s.activo = true
+        ORDER BY s.nivel
+        """)
     List<MaestroProjection> listarSeveridades();
 
-    @Query(value = """
-        SELECT
-            ID_PRIORIDAD AS maestroId,
-            NOMBRE AS descripcion
-        FROM PRIORIDAD
-        WHERE ACTIVO = TRUE
-        ORDER BY NIVEL
-        """, nativeQuery = true)
+    @Query("""
+        SELECT p.idPrioridad AS maestroId,
+               p.nombre AS descripcion
+        FROM PrioridadEntity p
+        WHERE p.activo = true
+        ORDER BY p.nivel
+        """)
     List<MaestroProjection> listarPrioridades();
 
-    @Query(value = """
-        SELECT
-            ID_ESTADO AS maestroId,
-            NOMBRE AS descripcion
-        FROM ESTADO_INCIDENCIA
-        WHERE ACTIVO = TRUE
-        ORDER BY ID_ESTADO
-        """, nativeQuery = true)
+    @Query("""
+        SELECT e.idEstado AS maestroId,
+               e.nombre AS descripcion
+        FROM EstadoIncidenciaEntity e
+        WHERE e.activo = true
+        ORDER BY e.idEstado
+        """)
     List<MaestroProjection> listarEstadosIncidencia();
 
-    @Query(value = """
-        SELECT
-            S.ID_SLA AS maestroId,
-            CONCAT(SEV.NOMBRE, ' - ', S.MINUTOS_RESOLUCION, ' min') AS descripcion
-        FROM SLA S
-        INNER JOIN SEVERIDAD SEV ON SEV.ID_SEVERIDAD = S.ID_SEVERIDAD
-        WHERE S.ACTIVO = TRUE
-        ORDER BY S.ID_SLA
-        """, nativeQuery = true)
+    @Query("""
+        SELECT s.idSla AS maestroId,
+               CONCAT(
+                   sev.nombre,
+                   ' - ',
+                   CAST(s.minutosResolucion AS string),
+                   ' min'
+               ) AS descripcion
+        FROM SlaEntity s
+        JOIN SeveridadEntity sev
+          ON sev.idSeveridad = s.idSeveridad
+        WHERE s.activo = true
+        ORDER BY s.idSla
+        """)
     List<MaestroProjection> listarSla();
 }

@@ -13,7 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +34,9 @@ class UsuarioServiceImplTest {
     @Mock
     private RolRepository rolRepository;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UsuarioServiceImpl usuarioService;
 
@@ -50,6 +53,8 @@ class UsuarioServiceImplTest {
         when(usuarioRepository.existsByUsuarioIgnoreCase("jperez")).thenReturn(false);
         when(usuarioRepository.existsByCorreoIgnoreCase("jperez@demo.com")).thenReturn(false);
         when(rolRepository.existsById(4)).thenReturn(true);
+        when(passwordEncoder.encode("123456"))
+                .thenReturn("$2a$10$passwordCodificadoParaPrueba");
         when(usuarioRepository.save(any(UsuarioEntity.class))).thenAnswer(invocation -> {
             UsuarioEntity usuario = invocation.getArgument(0);
             usuario.setIdUsuario(10);
