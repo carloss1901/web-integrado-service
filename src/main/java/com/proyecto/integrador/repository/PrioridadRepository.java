@@ -9,15 +9,18 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface PrioridadRepository extends JpaRepository<PrioridadEntity, Integer> {
+public interface PrioridadRepository
+        extends JpaRepository<PrioridadEntity, Integer> {
 
-    @Query(value = """
-        SELECT *
-        FROM PRIORIDAD
-        WHERE :puntaje BETWEEN PUNTAJE_MINIMO AND PUNTAJE_MAXIMO
-        AND ACTIVO = TRUE
-        ORDER BY NIVEL DESC
-        LIMIT 1
-        """, nativeQuery = true)
-    Optional<PrioridadEntity> findByPuntaje(@Param("puntaje") Integer puntaje);
+    @Query("""
+        SELECT p
+        FROM PrioridadEntity p
+        WHERE :puntaje BETWEEN
+            p.puntajeMinimo AND p.puntajeMaximo
+          AND p.activo = true
+        ORDER BY p.nivel DESC
+        """)
+    Optional<PrioridadEntity> findByPuntaje(
+            @Param("puntaje") Integer puntaje
+    );
 }

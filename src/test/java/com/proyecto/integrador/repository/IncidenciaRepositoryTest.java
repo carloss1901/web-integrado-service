@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -66,5 +67,45 @@ class IncidenciaRepositoryTest {
         incidencia.setActivo(activo);
 
         return incidencia;
+    }
+
+    @Test
+    void obtenerIndicadoresDebeCalcularDatosDesdePersistencia() {
+        IncidenciaEntity pendienteVencida = crearIncidencia(
+                "INC-IND-001",
+                "Incidencia pendiente vencida",
+                true
+        );
+        pendienteVencida.setIdEstado(1);
+        pendienteVencida.setFechaLimite(
+                LocalDateTime.now().minusHours(2)
+        );
+
+        IncidenciaEntity resuelta = crearIncidencia(
+                "INC-IND-002",
+                "Incidencia resuelta",
+                true
+        );
+        resuelta.setIdEstado(6);
+
+        IncidenciaEntity inactiva = crearIncidencia(
+                "INC-IND-003",
+                "Incidencia inactiva",
+                false
+        );
+
+        incidenciaRepository.save(pendienteVencida);
+        incidenciaRepository.save(resuelta);
+        incidenciaRepository.save(inactiva);
+        incidenciaRepository.flush();
+
+        IndicadoresIncidenciaResponse resultado =
+                incidenciaRepository.obtenerIndicadores();
+
+        assertEquals(2L, resultado.getTotalIncidencias());
+        assertEquals(1L, resultado.getIncidenciasPendientes());
+        assertEquals(1L, resultado.getIncidenciasVencidas());
+        assertEquals(1L, resultado.getIncidenciasResueltas());
+        assertEquals(0L, resultado.getIncidenciasCerradas());
     }
 }

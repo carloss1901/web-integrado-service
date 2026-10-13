@@ -33,6 +33,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAut
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -363,5 +364,30 @@ class IncidenciaControllerTest {
 
         verify(incidenciaService)
                 .buscarIncidenciasPorTitulo("equipo");
+    }
+
+    @Test
+    void obtenerIndicadoresDebeResponderOk() throws Exception {
+        IndicadoresIncidenciaResponse response =
+                new IndicadoresIncidenciaResponse(
+                        8L,
+                        5L,
+                        3L,
+                        2L,
+                        1L
+                );
+
+        when(incidenciaService.obtenerIndicadores())
+                .thenReturn(response);
+
+        mockMvc.perform(get("/incidencias/indicadores"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalIncidencias").value(8))
+                .andExpect(jsonPath("$.incidenciasPendientes").value(5))
+                .andExpect(jsonPath("$.incidenciasVencidas").value(3))
+                .andExpect(jsonPath("$.incidenciasResueltas").value(2))
+                .andExpect(jsonPath("$.incidenciasCerradas").value(1));
+
+        verify(incidenciaService).obtenerIndicadores();
     }
 }

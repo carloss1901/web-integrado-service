@@ -110,5 +110,42 @@ class IncidenciaSecurityIntegrationTest {
                 ));
     }
 
+    @Test
+    void indicadoresConReportanteDebeResponder403() throws Exception {
+        String token = jwtUtil.generateToken(
+                4,
+                "reportante",
+                "Usuario",
+                "Reportante",
+                List.of("REPORTANTE")
+        );
 
+        mockMvc.perform(get("/incidencias/indicadores")
+                        .header(
+                                "Authorization",
+                                "Bearer " + token
+                        ))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void indicadoresConAdministradorDebeResponder200() throws Exception {
+        String token = jwtUtil.generateToken(
+                1,
+                "admin",
+                "Administrador",
+                "Sistema",
+                List.of("ADMINISTRADOR")
+        );
+
+        when(incidenciaService.obtenerIndicadores())
+                .thenReturn(null);
+
+        mockMvc.perform(get("/incidencias/indicadores")
+                        .header(
+                                "Authorization",
+                                "Bearer " + token
+                        ))
+                .andExpect(status().isOk());
+    }
 }

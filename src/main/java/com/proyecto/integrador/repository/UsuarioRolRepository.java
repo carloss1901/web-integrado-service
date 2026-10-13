@@ -10,29 +10,39 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface UsuarioRolRepository extends JpaRepository<UsuarioRolEntity, Integer> {
+public interface UsuarioRolRepository
+        extends JpaRepository<UsuarioRolEntity, Integer> {
 
-    @Query(value = """
-        SELECT ID_ROL
-        FROM USUARIO_ROL
-        WHERE ID_USUARIO = :idUsuario
-        AND ACTIVO = TRUE
-        AND ESTADO = TRUE
-        ORDER BY ID_ROL
-        """, nativeQuery = true)
-    List<Integer> listarIdsRolesPorUsuario(@Param("idUsuario") Integer idUsuario);
+    @Query("""
+        SELECT ur.idRol
+        FROM UsuarioRolEntity ur
+        WHERE ur.idUsuario = :idUsuario
+          AND ur.activo = true
+          AND ur.estado = true
+        ORDER BY ur.idRol
+        """)
+    List<Integer> listarIdsRolesPorUsuario(
+            @Param("idUsuario") Integer idUsuario
+    );
 
     @Modifying
-    @Query(value = "DELETE FROM USUARIO_ROL WHERE ID_USUARIO = :idUsuario", nativeQuery = true)
-    void deleteByIdUsuario(@Param("idUsuario") Integer idUsuario);
+    @Query("""
+        DELETE FROM UsuarioRolEntity ur
+        WHERE ur.idUsuario = :idUsuario
+        """)
+    void deleteByIdUsuario(
+            @Param("idUsuario") Integer idUsuario
+    );
 
     @Modifying
-    @Query(value = """
-        UPDATE USUARIO_ROL
-        SET ACTIVO = FALSE,
-            ESTADO = FALSE,
-            FEC_MOD = CURRENT_TIMESTAMP
-        WHERE ID_USUARIO = :idUsuario
-        """, nativeQuery = true)
-    void desactivarByIdUsuario(@Param("idUsuario") Integer idUsuario);
+    @Query("""
+        UPDATE UsuarioRolEntity ur
+        SET ur.activo = false,
+            ur.estado = false,
+            ur.fecMod = CURRENT_TIMESTAMP
+        WHERE ur.idUsuario = :idUsuario
+        """)
+    void desactivarByIdUsuario(
+            @Param("idUsuario") Integer idUsuario
+    );
 }

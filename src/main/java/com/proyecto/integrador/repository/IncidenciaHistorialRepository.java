@@ -9,38 +9,46 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface IncidenciaHistorialRepository extends JpaRepository<IncidenciaHistorialEntity, Integer> {
+public interface IncidenciaHistorialRepository
+        extends JpaRepository<IncidenciaHistorialEntity, Integer> {
 
-    @Query(value = """
-        SELECT
-            H.ID_HISTORIAL AS idHistorial,
-            H.ID_INCIDENCIA AS idIncidencia,
-            H.ID_USUARIO AS idUsuario,
-            CONCAT(U.NOMBRES, ' ', U.APELLIDOS) AS usuario,
-            R.NOMBRE AS rol,
-            H.TIPO_EVENTO AS tipoEvento,
-            H.VALOR_ANTERIOR AS valorAnterior,
-            H.VALOR_NUEVO AS valorNuevo,
-            H.DESCRIPCION AS descripcion,
-            FORMATDATETIME(H.FECHA_EVENTO, 'dd/MM/yyyy HH:mm') AS fechaEvento
-        FROM INCIDENCIA_HISTORIAL H
-        INNER JOIN USUARIO U ON U.ID_USUARIO = H.ID_USUARIO
-        LEFT JOIN USUARIO_ROL UR ON UR.ID_USUARIO = U.ID_USUARIO
-            AND UR.ACTIVO = TRUE AND UR.ESTADO = TRUE
-        LEFT JOIN ROL R ON R.ID_ROL = UR.ID_ROL AND R.ACTIVO = TRUE
-        WHERE H.ID_INCIDENCIA = :idIncidencia
-        AND H.ACTIVO = TRUE
-        ORDER BY H.FECHA_EVENTO
-        """,
-        countQuery = """
-        SELECT COUNT(1)
-        FROM INCIDENCIA_HISTORIAL H
-        WHERE H.ID_INCIDENCIA = :idIncidencia
-        AND H.ACTIVO = TRUE
-        """,
-        nativeQuery = true)
-    Page<IncidenciaHistorialProjection> listarHistorial(@Param("idIncidencia") Integer idIncidencia, Pageable pageable);
+    @Query(
+            value = """
+            SELECT
+                h.idHistorial AS idHistorial,
+                h.idIncidencia AS idIncidencia,
+                h.idUsuario AS idUsuario,
+                CONCAT(CONCAT(u.nombres, ' '), u.apellidos) AS usuario,
+                r.nombre AS rol,
+                h.tipoEvento AS tipoEvento,
+                h.valorAnterior AS valorAnterior,
+                h.valorNuevo AS valorNuevo,
+                h.descripcion AS descripcion,
+                CAST(h.fechaEvento AS string) AS fechaEvento
+            FROM IncidenciaHistorialEntity h
+            JOIN UsuarioEntity u
+              ON u.idUsuario = h.idUsuario
+            LEFT JOIN UsuarioRolEntity ur
+              ON ur.idUsuario = u.idUsuario
+             AND ur.activo = true
+             AND ur.estado = true
+            LEFT JOIN RolEntity r
+              ON r.idRol = ur.idRol
+             AND r.activo = true
+            WHERE h.idIncidencia = :idIncidencia
+              AND h.activo = true
+            ORDER BY h.fechaEvento
+            """,
+            countQuery = """
+            SELECT COUNT(h)
+            FROM IncidenciaHistorialEntity h
+            WHERE h.idIncidencia = :idIncidencia
+              AND h.activo = true
+            """
+    )
+    Page<IncidenciaHistorialProjection> listarHistorial(
+            @Param("idIncidencia") Integer idIncidencia,
+            Pageable pageable
+    );
 }

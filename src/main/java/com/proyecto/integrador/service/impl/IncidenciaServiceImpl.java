@@ -48,6 +48,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -111,6 +112,12 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listarIncidencias() {
         return genericMapper.toResponseList(incidenciaRepository.listarIncidencias(), IncidenciaResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public IndicadoresIncidenciaResponse obtenerIndicadores() {
+        return incidenciaRepository.obtenerIndicadores();
     }
 
     @Override

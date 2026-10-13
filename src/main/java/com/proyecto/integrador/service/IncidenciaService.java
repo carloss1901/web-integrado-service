@@ -16,6 +16,7 @@ import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.util.CustomPage;
 import org.springframework.http.ResponseEntity;
 import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import java.util.List;
 import java.time.LocalDate;
 
@@ -71,4 +72,5 @@ public interface IncidenciaService {
             Integer page,
             Integer size
     );
+    IndicadoresIncidenciaResponse obtenerIndicadores();
 }

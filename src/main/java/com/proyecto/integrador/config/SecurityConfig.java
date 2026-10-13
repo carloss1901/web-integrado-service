@@ -76,6 +76,15 @@ public class SecurityConfig {
                                 "RESPONSABLE_ATENCION",
                                 "SUPERVISOR"
                         )
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/incidencias/indicadores"
+                        )
+                        .hasAnyRole(
+                                "ADMINISTRADOR",
+                                "OPERADOR_MESA_CONTROL",
+                                "SUPERVISOR"
+                        )
                         .requestMatchers(HttpMethod.GET, "/incidencias/*")
                         .hasAnyRole(
                                 "ADMINISTRADOR",

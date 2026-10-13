@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestAttribute;
+import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -93,6 +94,14 @@ public class IncidenciaController {
                 page,
                 size
         );
+    }
+
+    @GetMapping(
+            value = "indicadores",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public IndicadoresIncidenciaResponse obtenerIndicadores() {
+        return incidenciaService.obtenerIndicadores();
     }
 
     @GetMapping(value = "{idIncidencia}", produces = MediaType.APPLICATION_JSON_VALUE)
