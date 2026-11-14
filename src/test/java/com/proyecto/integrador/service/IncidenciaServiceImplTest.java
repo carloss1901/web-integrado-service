@@ -108,7 +108,6 @@ class IncidenciaServiceImplTest {
     @Test
     void registrarIncidenciaDebeResponderOk() {
         RegistrarIncidenciaRequest request = new RegistrarIncidenciaRequest();
-        request.setIdReportante(1);
         request.setIdCategoria(1);
         request.setIdUbicacion(1);
         request.setTitulo("No enciende el equipo");
@@ -125,7 +124,7 @@ class IncidenciaServiceImplTest {
             return incidencia;
         });
 
-        ResponseEntity<Object> response = incidenciaService.registrarIncidencia(request);
+        ResponseEntity<Object> response = incidenciaService.registrarIncidencia(request, 1);
 
         assertEquals(200, response.getStatusCode().value());
         verify(incidenciaRepository).save(any(IncidenciaEntity.class));
@@ -135,11 +134,9 @@ class IncidenciaServiceImplTest {
     @Test
     void registrarIncidenciaDebeFallarSinRolReportante() {
         RegistrarIncidenciaRequest request = new RegistrarIncidenciaRequest();
-        request.setIdReportante(1);
-
         when(usuarioRepository.countUsuarioByRolId(1, 4)).thenReturn(0);
 
-        ResponseEntity<Object> response = incidenciaService.registrarIncidencia(request);
+        ResponseEntity<Object> response = incidenciaService.registrarIncidencia(request, 1);
 
         assertEquals(400, response.getStatusCode().value());
     }

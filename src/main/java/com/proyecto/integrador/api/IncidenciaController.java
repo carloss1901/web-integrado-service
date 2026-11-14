@@ -120,8 +120,7 @@ public class IncidenciaController {
             @Valid @RequestBody RegistrarIncidenciaRequest request,
             @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
     ) {
-        request.setIdReportante(idUsuarioAutenticado);
-        return incidenciaService.registrarIncidencia(request);
+        return incidenciaService.registrarIncidencia(request, idUsuarioAutenticado);
     }
 
     @PutMapping(value = "actualizar", produces = MediaType.APPLICATION_JSON_VALUE)

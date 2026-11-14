@@ -4,12 +4,15 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import com.proyecto.integrador.model.enums.RolEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Collection;
 
 @Component
 public class JwtUtil {
@@ -21,7 +24,8 @@ public class JwtUtil {
     private Long expiration;
 
     public String generateToken(Integer idUsuario, String usuario, String nombres,
-                                String apePaterno, String apeMaterno, List<String> roles) {
+                                String apePaterno, String apeMaterno, List<JwtRole> roles,
+                                JwtRole rolSeleccionado) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expiration);
         return Jwts.builder()
@@ -31,10 +35,21 @@ public class JwtUtil {
             .claim("apePaterno", apePaterno)
             .claim("apeMaterno", apeMaterno)
             .claim("roles", roles)
+            .claim("rolSeleccionado", rolSeleccionado)
             .setIssuedAt(now)
             .setExpiration(exp)
             .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
             .compact();
+    }
+
+    public String generateToken(Integer idUsuario, String usuario, String nombres,
+                                String apePaterno, String apeMaterno, Collection<String> roles) {
+        List<JwtRole> jwtRoles = roles.stream().map(nombre -> {
+            RolEnum rol = RolEnum.fromCodigo(nombre);
+            return rol == null ? new JwtRole(null, nombre) : new JwtRole(rol.getId(), rol.getCodigo());
+        }).toList();
+        return generateToken(idUsuario, usuario, nombres, apePaterno, apeMaterno, jwtRoles,
+                jwtRoles.isEmpty() ? null : jwtRoles.get(0));
     }
 
     public String extractUsuario(String token) {
@@ -58,12 +73,28 @@ public class JwtUtil {
         return getClaims(token).get("apeMaterno", String.class);
     }
 
-    public List<String> extractRoles(String token) {
+    public List<JwtRole> extractRoles(String token) {
         Object roles = getClaims(token).get("roles");
         if (roles instanceof List<?> list) {
-            return list.stream().map(String::valueOf).toList();
+            return list.stream().map(this::toJwtRole).toList();
         }
         return List.of();
+    }
+
+    public JwtRole extractRolSeleccionado(String token) {
+        Object role = getClaims(token).get("rolSeleccionado");
+        return role == null ? null : toJwtRole(role);
+    }
+
+    private JwtRole toJwtRole(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Object id = map.get("id");
+            Object nombre = map.get("nombre");
+            return new JwtRole(id instanceof Number number ? number.intValue() : Integer.valueOf(String.valueOf(id)),
+                    String.valueOf(nombre));
+        }
+        // Permite validar tokens antiguos mientras se renuevan.
+        return new JwtRole(null, String.valueOf(value));
     }
 
     public boolean isTokenValid(String token, String usuario) {

@@ -2,11 +2,14 @@ package com.proyecto.integrador.service.impl;
 
 import com.proyecto.integrador.model.entity.RolEntity;
 import com.proyecto.integrador.model.entity.UsuarioEntity;
+import com.proyecto.integrador.model.enums.RolEnum;
 import com.proyecto.integrador.model.request.auth.LoginRequest;
+import com.proyecto.integrador.model.request.auth.SeleccionarRolRequest;
 import com.proyecto.integrador.repository.RolRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.repository.UsuarioRolRepository;
 import com.proyecto.integrador.security.JwtUtil;
+import com.proyecto.integrador.security.JwtRole;
 import com.proyecto.integrador.service.AuthService;
 import com.proyecto.integrador.util.MessageResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -74,12 +78,55 @@ public class AuthServiceImpl implements AuthService {
             );
         }
         List<Integer> idRoles = usuarioRolRepository.listarIdsRolesPorUsuario(usuarioEntity.getIdUsuario());
-        List<String> roles = rolRepository.findAllById(idRoles).stream()
-            .map(RolEntity::getNombre)
-            .sorted(Comparator.naturalOrder())
+        List<JwtRole> roles = rolRepository.findAllById(idRoles).stream()
+            .map(this::toJwtRole)
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(JwtRole::nombre))
             .toList();
         String token = jwtUtil.generateToken(usuarioEntity.getIdUsuario(), usuarioEntity.getUsuario(),
-            usuarioEntity.getNombres(), usuarioEntity.getApePaterno(), usuarioEntity.getApeMaterno(), roles);
+            usuarioEntity.getNombres(), usuarioEntity.getApePaterno(), usuarioEntity.getApeMaterno(), roles, null);
         return MessageResponse.setResponse(true, HttpStatus.OK, "Login exitoso", token);
+    }
+
+    @Override
+    public ResponseEntity<Object> seleccionarRol(SeleccionarRolRequest request, String token) {
+        Integer idUsuario = jwtUtil.extractIdUsuario(token);
+        if (idUsuario == null || !jwtUtil.isTokenValid(token, jwtUtil.extractUsuario(token))) {
+            return MessageResponse.setResponse(false, HttpStatus.UNAUTHORIZED, "Token invalido", null);
+        }
+        List<Integer> idsRoles = usuarioRolRepository.listarIdsRolesPorUsuario(idUsuario);
+        if (!idsRoles.contains(request.getIdRol())) {
+            return MessageResponse.setResponse(false, HttpStatus.FORBIDDEN, "El rol no pertenece al usuario", null);
+        }
+        RolEntity rolSeleccionado = rolRepository.findById(request.getIdRol()).orElse(null);
+        if (rolSeleccionado == null || Boolean.FALSE.equals(rolSeleccionado.getActivo())) {
+            return MessageResponse.setResponse(false, HttpStatus.FORBIDDEN, "El rol no esta activo", null);
+        }
+        List<JwtRole> roles = rolRepository.findAllById(idsRoles).stream()
+            .map(this::toJwtRole)
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(JwtRole::nombre))
+            .toList();
+        RolEnum rolEnum = resolveRole(rolSeleccionado);
+        if (rolEnum == null) {
+            return MessageResponse.setResponse(false, HttpStatus.FORBIDDEN, "El rol no esta configurado", null);
+        }
+        JwtRole selected = new JwtRole(rolEnum.getId(), rolEnum.getCodigo());
+        String nuevoToken = jwtUtil.generateToken(idUsuario, jwtUtil.extractUsuario(token),
+            jwtUtil.extractNombres(token), jwtUtil.extractApePaterno(token), jwtUtil.extractApeMaterno(token), roles, selected);
+        return MessageResponse.setResponse(true, HttpStatus.OK, "Rol seleccionado", nuevoToken);
+    }
+
+    private JwtRole toJwtRole(RolEntity rol) {
+        RolEnum rolEnum = resolveRole(rol);
+        return rolEnum == null ? null : new JwtRole(rolEnum.getId(), rolEnum.getCodigo());
+    }
+
+    private RolEnum resolveRole(RolEntity rol) {
+        if (rol == null) {
+            return null;
+        }
+        RolEnum roleByName = RolEnum.fromCodigo(rol.getNombre());
+        return roleByName != null ? roleByName : RolEnum.fromId(rol.getIdRol());
     }
 }

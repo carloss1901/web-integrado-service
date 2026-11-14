@@ -92,13 +92,12 @@ class IncidenciaControllerTest {
     @Test
     void registrarIncidenciaDebeResponderOk() throws Exception {
         RegistrarIncidenciaRequest request = new RegistrarIncidenciaRequest();
-        request.setIdReportante(1);
         request.setIdCategoria(1);
         request.setIdUbicacion(1);
         request.setTitulo("No enciende el equipo");
         request.setDescripcion("El equipo no muestra imagen");
 
-        when(incidenciaService.registrarIncidencia(any(RegistrarIncidenciaRequest.class)))
+        when(incidenciaService.registrarIncidencia(any(RegistrarIncidenciaRequest.class), any()))
                 .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia registrada correctamente"));
 
         mockMvc.perform(post("/incidencias/registrar")
@@ -108,7 +107,7 @@ class IncidenciaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
 
-        verify(incidenciaService).registrarIncidencia(any(RegistrarIncidenciaRequest.class));
+        verify(incidenciaService).registrarIncidencia(any(RegistrarIncidenciaRequest.class), any());
     }
 
     @Test

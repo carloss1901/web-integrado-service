@@ -9,6 +9,7 @@ import com.proyecto.integrador.model.entity.IncidenciaEvidenciaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaHistorialEntity;
 import com.proyecto.integrador.model.entity.PrioridadEntity;
 import com.proyecto.integrador.model.entity.SlaEntity;
+import com.proyecto.integrador.model.enums.RolEnum;
 import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
@@ -57,11 +58,11 @@ import java.time.LocalDate;
 @Service
 public class IncidenciaServiceImpl implements IncidenciaService {
 
-    private static final int ROL_REPORTANTE = 4;
-    private static final int ROL_OPERADOR = 2;
-    private static final int ROL_RESPONSABLE = 3;
-    private static final int ROL_SUPERVISOR = 5;
-    private static final int ROL_ADMINISTRADOR = 1;
+    private static final int ROL_REPORTANTE = RolEnum.REPORTANTE.getId();
+    private static final int ROL_OPERADOR = RolEnum.OPERADOR_MESA_CONTROL.getId();
+    private static final int ROL_RESPONSABLE = RolEnum.RESPONSABLE_ATENCION.getId();
+    private static final int ROL_SUPERVISOR = RolEnum.SUPERVISOR.getId();
+    private static final int ROL_ADMINISTRADOR = RolEnum.ADMINISTRADOR.getId();
     private static final int ESTADO_REGISTRADA = 1;
     private static final int ESTADO_CLASIFICADA = 2;
     private static final int ESTADO_ASIGNADA = 3;
@@ -199,8 +200,9 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional
-    public ResponseEntity<Object> registrarIncidencia(RegistrarIncidenciaRequest request) {
-        if (!tieneRol(request.getIdReportante(), ROL_REPORTANTE)) {
+    public ResponseEntity<Object> registrarIncidencia(RegistrarIncidenciaRequest request, Integer idReportante) {
+        if (!tieneRol(idReportante, ROL_REPORTANTE)
+                && !tieneRol(idReportante, ROL_ADMINISTRADOR)) {
             return error("El usuario no tiene rol REPORTANTE");
         }
         if (!categoriaRepository.existsById(request.getIdCategoria())) {
@@ -213,7 +215,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         LocalDateTime ahora = LocalDateTime.now();
         IncidenciaEntity incidencia = new IncidenciaEntity();
         incidencia.setCodigo(generarCodigo(ahora));
-        incidencia.setIdReportante(request.getIdReportante());
+        incidencia.setIdReportante(idReportante);
         incidencia.setIdCategoria(request.getIdCategoria());
         incidencia.setIdUbicacion(request.getIdUbicacion());
         incidencia.setIdEstado(obtenerEstado(ESTADO_REGISTRADA).getIdEstado());
@@ -223,7 +225,7 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         incidencia.setActivo(Boolean.TRUE);
 
         incidenciaRepository.save(incidencia);
-        registrarHistorial(incidencia.getIdIncidencia(), request.getIdReportante(), "REGISTRO_INCIDENCIA",
+        registrarHistorial(incidencia.getIdIncidencia(), idReportante, "REGISTRO_INCIDENCIA",
             null, incidencia.getCodigo(), "Registro inicial de incidencia");
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia registrada correctamente");

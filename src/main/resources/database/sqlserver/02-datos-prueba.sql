@@ -27,11 +27,11 @@ INSERT INTO ROL (
     ACTIVO
 )
 VALUES
-    (1, 'ADMINISTRADOR', 1),
+    (1, 'REPORTANTE', 1),
     (2, 'OPERADOR_MESA_CONTROL', 1),
     (3, 'RESPONSABLE_ATENCION', 1),
-    (4, 'REPORTANTE', 1),
-    (5, 'SUPERVISOR', 1);
+    (4, 'SUPERVISOR', 1),
+    (5, 'ADMINISTRADOR', 1);
 
 SET IDENTITY_INSERT ROL OFF;
 
@@ -111,11 +111,11 @@ INSERT INTO USUARIO_ROL (
     ACTIVO
 )
 VALUES
-    (1, 1, 1, 1, 1),
+    (1, 1, 5, 1, 1),
     (2, 2, 2, 1, 1),
     (3, 3, 3, 1, 1),
-    (4, 4, 4, 1, 1),
-    (5, 5, 5, 1, 1);
+    (4, 4, 1, 1, 1),
+    (5, 5, 4, 1, 1);
 
 SET IDENTITY_INSERT USUARIO_ROL OFF;
 

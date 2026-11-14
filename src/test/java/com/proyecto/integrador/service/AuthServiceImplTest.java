@@ -7,6 +7,7 @@ import com.proyecto.integrador.repository.RolRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.repository.UsuarioRolRepository;
 import com.proyecto.integrador.security.JwtUtil;
+import com.proyecto.integrador.security.JwtRole;
 import com.proyecto.integrador.service.impl.AuthServiceImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.junit.jupiter.api.Test;
@@ -63,13 +64,13 @@ class AuthServiceImplTest {
     void loginConCredencialesValidasDebeRetornarTokenYRoles() {
         UsuarioEntity usuario = usuarioValido();
         RolEntity rol = new RolEntity();
-        rol.setIdRol(1);
+        rol.setIdRol(5);
         rol.setNombre("ADMINISTRADOR");
 
         when(usuarioRepository.findByUsuarioIgnoreCase("admin")).thenReturn(Optional.of(usuario));
-        when(usuarioRolRepository.listarIdsRolesPorUsuario(1)).thenReturn(List.of(1));
-        when(rolRepository.findAllById(List.of(1))).thenReturn(List.of(rol));
-        when(jwtUtil.generateToken(1, "admin", "Admin", "Sistema", List.of("ADMINISTRADOR"))).thenReturn("token-demo");
+        when(usuarioRolRepository.listarIdsRolesPorUsuario(1)).thenReturn(List.of(5));
+        when(rolRepository.findAllById(List.of(5))).thenReturn(List.of(rol));
+        when(jwtUtil.generateToken(1, "admin", "Admin", "Sistema", List.of(new JwtRole(5, "ADMINISTRADOR")), null)).thenReturn("token-demo");
         when(passwordEncoder.matches(
                 "123456",
                 usuario.getPassword()
@@ -85,7 +86,7 @@ class AuthServiceImplTest {
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertEquals(true, body.get("success"));
         assertEquals("token-demo", body.get("data"));
-        verify(jwtUtil).generateToken(1, "admin", "Admin", "Sistema", List.of("ADMINISTRADOR"));
+        verify(jwtUtil).generateToken(1, "admin", "Admin", "Sistema", List.of(new JwtRole(5, "ADMINISTRADOR")), null);
     }
 
     @Test

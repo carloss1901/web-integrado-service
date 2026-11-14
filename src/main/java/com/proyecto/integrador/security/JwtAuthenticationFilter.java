@@ -1,5 +1,6 @@
 package com.proyecto.integrador.security;
 
+import com.proyecto.integrador.model.enums.RolEnum;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -35,10 +37,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (jwtUtil.isTokenValid(token, usuario)) {
                         Integer idUsuario = jwtUtil.extractIdUsuario(token);
                         request.setAttribute("idUsuarioAutenticado", idUsuario);
-                        List<String> roles = jwtUtil.extractRoles(token);
-                        List<SimpleGrantedAuthority> authorities = roles.stream()
+                        JwtRole selectedRole = jwtUtil.extractRolSeleccionado(token);
+                        List<SimpleGrantedAuthority> authorities = selectedRole == null
+                            ? List.of()
+                            : List.of(selectedRole)
+                            .stream()
+                            .map(this::resolveRole)
+                            .filter(Objects::nonNull)
+                            .map(RolEnum::getCodigo)
                             .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol))
-                            .map(authority -> (SimpleGrantedAuthority) authority)
                             .toList();
                         UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(usuario, null, authorities);
@@ -51,5 +58,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private RolEnum resolveRole(JwtRole role) {
+        if (role == null) {
+            return null;
+        }
+        RolEnum roleByName = RolEnum.fromCodigo(role.nombre());
+        return roleByName != null ? roleByName : RolEnum.fromId(role.id());
     }
 }

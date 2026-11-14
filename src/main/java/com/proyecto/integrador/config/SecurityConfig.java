@@ -3,6 +3,7 @@ package com.proyecto.integrador.config;
 import com.proyecto.integrador.security.JwtAuthenticationFilter;
 import com.proyecto.integrador.security.JwtUtil;
 import com.proyecto.integrador.security.RestAuthenticationEntryPoint;
+import com.proyecto.integrador.model.enums.RolEnum;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,23 +47,25 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/seleccionar-rol").authenticated()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/usuario/**").hasRole("ADMINISTRADOR")
+                        // Temporalmente cualquier usuario autenticado puede gestionar usuarios.
+                        .requestMatchers("/usuario/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/comunes/**")
-                        .hasRole("ADMINISTRADOR")
+                        .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.PUT, "/comunes/**")
-                        .hasRole("ADMINISTRADOR")
+                        .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.DELETE, "/comunes/**")
-                        .hasRole("ADMINISTRADOR")
+                        .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.GET, "/comunes/**").authenticated()
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/incidencias/listar"
                         )
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
 
                         .requestMatchers(
@@ -70,68 +73,71 @@ public class SecurityConfig {
                                 "/incidencias/vencidas"
                         )
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "RESPONSABLE_ATENCION",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.RESPONSABLE_ATENCION.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/incidencias/indicadores"
                         )
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers(HttpMethod.GET, "/incidencias/*")
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "RESPONSABLE_ATENCION",
-                                "REPORTANTE",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.RESPONSABLE_ATENCION.getCodigo(),
+                                RolEnum.REPORTANTE.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers(HttpMethod.POST, "/incidencias/registrar")
-                        .hasRole("REPORTANTE")
+                        .hasAnyRole(
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.REPORTANTE.getCodigo()
+                        )
                         .requestMatchers(HttpMethod.PUT, "/incidencias/actualizar")
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo()
                         )
                         .requestMatchers(HttpMethod.DELETE, "/incidencias/eliminar/**")
-                        .hasRole("ADMINISTRADOR")
+                        .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/clasificar")
-                        .hasRole("OPERADOR_MESA_CONTROL")
+                        .hasRole(RolEnum.OPERADOR_MESA_CONTROL.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/asignar-responsable")
-                        .hasRole("OPERADOR_MESA_CONTROL")
+                        .hasRole(RolEnum.OPERADOR_MESA_CONTROL.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/iniciar-atencion")
-                        .hasRole("RESPONSABLE_ATENCION")
+                        .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/resolver")
-                        .hasRole("RESPONSABLE_ATENCION")
+                        .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/cerrar")
-                        .hasRole("SUPERVISOR")
+                        .hasRole(RolEnum.SUPERVISOR.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/acciones-correctivas")
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "RESPONSABLE_ATENCION",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.RESPONSABLE_ATENCION.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers(HttpMethod.POST, "/incidencias/evidencias")
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "RESPONSABLE_ATENCION",
-                                "REPORTANTE",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.RESPONSABLE_ATENCION.getCodigo(),
+                                RolEnum.REPORTANTE.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers(HttpMethod.POST, "/incidencias/comentarios")
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "RESPONSABLE_ATENCION",
-                                "REPORTANTE",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.RESPONSABLE_ATENCION.getCodigo(),
+                                RolEnum.REPORTANTE.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -141,11 +147,11 @@ public class SecurityConfig {
                                 "/incidencias/*/comentarios"
                         )
                         .hasAnyRole(
-                                "ADMINISTRADOR",
-                                "OPERADOR_MESA_CONTROL",
-                                "RESPONSABLE_ATENCION",
-                                "REPORTANTE",
-                                "SUPERVISOR"
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.RESPONSABLE_ATENCION.getCodigo(),
+                                RolEnum.REPORTANTE.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
                         )
                         .requestMatchers("/incidencias/**").authenticated()
                         .requestMatchers("/error").permitAll()

@@ -39,7 +39,7 @@ public interface IncidenciaService {
             Integer idIncidencia,
             Integer idUsuarioAutenticado
     );
-    ResponseEntity<Object> registrarIncidencia(RegistrarIncidenciaRequest request);
+    ResponseEntity<Object> registrarIncidencia(RegistrarIncidenciaRequest request, Integer idReportante);
     ResponseEntity<Object> actualizarIncidencia(ActualizarIncidenciaRequest request);
     ResponseEntity<Object> eliminarIncidencia(Integer idIncidencia);
     ResponseEntity<Object> clasificarIncidencia(ClasificarIncidenciaRequest request);
