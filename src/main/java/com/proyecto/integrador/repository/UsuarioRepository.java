@@ -19,13 +19,17 @@ public interface UsuarioRepository
 
     Optional<UsuarioEntity> findByUsuarioIgnoreCase(String usuario);
 
+    Optional<UsuarioEntity> findFirstByActivoTrueAndEstadoTrueOrderByIdUsuarioAsc();
+
     @Query(
             value = """
             SELECT
                 u.idUsuario AS idUsuario,
                 u.usuario AS usuario,
                 u.nombres AS nombres,
-                u.apellidos AS apellidos,
+                u.apePaterno AS apePaterno,
+                u.apeMaterno AS apeMaterno,
+                CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, ''))) AS apellidos,
                 u.correo AS correo,
                 u.activo AS activo,
                 CASE
@@ -63,7 +67,7 @@ public interface UsuarioRepository
             AND (
                 :#{#rq.apellidos} IS NULL
                 OR :#{#rq.apellidos} = ''
-                OR LOWER(u.apellidos) LIKE LOWER(
+                OR LOWER(CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) LIKE LOWER(
                     CONCAT('%', CONCAT(:#{#rq.apellidos}, '%'))
                 )
             )
@@ -82,7 +86,8 @@ public interface UsuarioRepository
                 u.idUsuario,
                 u.usuario,
                 u.nombres,
-                u.apellidos,
+                u.apePaterno,
+                u.apeMaterno,
                 u.correo,
                 u.activo,
                 u.fecReg,
@@ -109,7 +114,7 @@ public interface UsuarioRepository
             AND (
                 :#{#rq.apellidos} IS NULL
                 OR :#{#rq.apellidos} = ''
-                OR LOWER(u.apellidos) LIKE LOWER(
+                OR LOWER(CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) LIKE LOWER(
                     CONCAT('%', CONCAT(:#{#rq.apellidos}, '%'))
                 )
             )

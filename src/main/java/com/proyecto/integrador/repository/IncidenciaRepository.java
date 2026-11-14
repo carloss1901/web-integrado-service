@@ -22,8 +22,8 @@ public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, In
         SELECT
             i.idIncidencia AS idIncidencia,
             i.codigo AS codigo,
-            CONCAT(CONCAT(ur.nombres, ' '), ur.apellidos) AS reportante,
-            CONCAT(CONCAT(ua.nombres, ' '), ua.apellidos) AS responsable,
+            CONCAT(CONCAT(ur.nombres, ' '), CONCAT(ur.apePaterno, CONCAT(' ', COALESCE(ur.apeMaterno, '')))) AS reportante,
+            CONCAT(CONCAT(ua.nombres, ' '), CONCAT(ua.apePaterno, CONCAT(' ', COALESCE(ua.apeMaterno, '')))) AS responsable,
             c.nombre AS categoria,
             u.nombre AS ubicacion,
             s.nombre AS severidad,
@@ -71,8 +71,8 @@ public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, In
     SELECT
         i.idIncidencia AS idIncidencia,
         i.codigo AS codigo,
-        CONCAT(CONCAT(ur.nombres, ' '), ur.apellidos) AS reportante,
-        CONCAT(CONCAT(ua.nombres, ' '), ua.apellidos) AS responsable,
+        CONCAT(CONCAT(ur.nombres, ' '), CONCAT(ur.apePaterno, CONCAT(' ', COALESCE(ur.apeMaterno, '')))) AS reportante,
+        CONCAT(CONCAT(ua.nombres, ' '), CONCAT(ua.apePaterno, CONCAT(' ', COALESCE(ua.apeMaterno, '')))) AS responsable,
         c.nombre AS categoria,
         u.nombre AS ubicacion,
         s.nombre AS severidad,
@@ -108,8 +108,8 @@ public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, In
     SELECT
         i.idIncidencia AS idIncidencia,
         i.codigo AS codigo,
-        CONCAT(CONCAT(ur.nombres, ' '), ur.apellidos) AS reportante,
-        CONCAT(CONCAT(ua.nombres, ' '), ua.apellidos) AS responsable,
+        CONCAT(CONCAT(ur.nombres, ' '), CONCAT(ur.apePaterno, CONCAT(' ', COALESCE(ur.apeMaterno, '')))) AS reportante,
+        CONCAT(CONCAT(ua.nombres, ' '), CONCAT(ua.apePaterno, CONCAT(' ', COALESCE(ua.apeMaterno, '')))) AS responsable,
         c.nombre AS categoria,
         u.nombre AS ubicacion,
         s.nombre AS severidad,

@@ -28,8 +28,12 @@ public class UsuarioEntity {
     @Column(name = "NOMBRES")
     private String nombres;
 
-    @Column(name = "APELLIDOS")
-    private String apellidos;
+    @Column(name = "APE_PATERNO")
+    private String apePaterno;
+
+    @Column(name = "APE_MATERNO")
+    private String apeMaterno;
+
 
     @Column(name = "CORREO")
     private String correo;

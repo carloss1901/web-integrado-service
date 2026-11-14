@@ -3,7 +3,7 @@ package com.proyecto.integrador.api;
 import com.proyecto.integrador.model.request.usuario.ActualizarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.ListarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.RegistrarUsuarioRequest;
-import com.proyecto.integrador.model.projection.UsuarioProjection;
+import com.proyecto.integrador.model.response.UsuarioListadoResponse;
 import com.proyecto.integrador.service.UsuarioService;
 import com.proyecto.integrador.util.CustomPage;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping(value = "listar", produces = MediaType.APPLICATION_JSON_VALUE)
-    public CustomPage<UsuarioProjection> listarUsuario(
+    public CustomPage<UsuarioListadoResponse> listarUsuario(
         @RequestParam(value = "usuario", required = false) String usuario,
         @RequestParam(value = "nombres", required = false) String nombres,
         @RequestParam(value = "apellidos", required = false) String apellidos,
@@ -49,7 +49,7 @@ public class UsuarioController {
         rq.setNombres(nombres);
         rq.setApellidos(apellidos);
         rq.setCorreo(correo);
-        rq.setEstado(estado);
+        rq.setEstado(estado == null ? null : estado == 1);
         rq.setPage(page);
         rq.setSize(size);
 
@@ -74,5 +74,10 @@ public class UsuarioController {
     @DeleteMapping(value = "eliminar/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> eliminarUsuario(@PathVariable("idUsuario") Integer idUsuario) {
         return usuarioService.eliminarUsuario(idUsuario);
+    }
+
+    @PutMapping(value = "activar/{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> activarUsuario(@PathVariable("idUsuario") Integer idUsuario) {
+        return usuarioService.activarUsuario(idUsuario);
     }
 }

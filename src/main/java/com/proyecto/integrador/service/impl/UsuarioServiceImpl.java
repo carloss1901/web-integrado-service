@@ -7,6 +7,8 @@ import com.proyecto.integrador.model.request.usuario.ActualizarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.ListarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.RegistrarUsuarioRequest;
 import com.proyecto.integrador.model.response.UsuarioResponse;
+import com.proyecto.integrador.model.response.MaestroResponse;
+import com.proyecto.integrador.model.response.UsuarioListadoResponse;
 import com.proyecto.integrador.repository.RolRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.repository.UsuarioRolRepository;
@@ -23,12 +25,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
+
+    private static final String PASSWORD_USUARIO_NUEVO = "campus360";
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -44,9 +49,37 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public CustomPage<UsuarioProjection> listarUsuario(ListarUsuarioRequest request) {
+    public CustomPage<UsuarioListadoResponse> listarUsuario(ListarUsuarioRequest request) {
         Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize());
-        return new CustomPage<>(usuarioRepository.listarUsuario(request, pageable));
+        var page = usuarioRepository.listarUsuario(request, pageable);
+        CustomPage<UsuarioListadoResponse> response = new CustomPage<>(page.map(this::mapearUsuarioListado));
+        return response;
+    }
+
+    private UsuarioListadoResponse mapearUsuarioListado(UsuarioProjection projection) {
+        UsuarioListadoResponse response = new UsuarioListadoResponse();
+        response.setIdUsuario(projection.getIdUsuario());
+        response.setUsuario(projection.getUsuario());
+        response.setNombres(projection.getNombres());
+        response.setApePaterno(projection.getApePaterno());
+        response.setApeMaterno(projection.getApeMaterno());
+        response.setCorreo(projection.getCorreo());
+        response.setActivo(projection.getActivo());
+        response.setEstadoDsc(projection.getEstadoDsc());
+        response.setFecRegistro(projection.getFecRegistro());
+        response.setFecModificacion(projection.getFecModificacion());
+        response.setRoles(usuarioRolRepository.listarIdsRolesPorUsuario(projection.getIdUsuario())
+                .stream()
+                .map(idRol -> rolRepository.findById(idRol).orElse(null))
+                .filter(rol -> rol != null && Boolean.TRUE.equals(rol.getActivo()))
+                .map(rol -> {
+                    MaestroResponse item = new MaestroResponse();
+                    item.setMaestroId(rol.getIdRol());
+                    item.setDescripcion(rol.getNombre());
+                    return item;
+                })
+                .toList());
+        return response;
     }
 
     @Override
@@ -65,7 +98,8 @@ public class UsuarioServiceImpl implements UsuarioService {
         response.setIdUsuario(usuario.getIdUsuario());
         response.setUsuario(usuario.getUsuario());
         response.setNombres(usuario.getNombres());
-        response.setApellidos(usuario.getApellidos());
+        response.setApePaterno(usuario.getApePaterno());
+        response.setApeMaterno(usuario.getApeMaterno());
         response.setCorreo(usuario.getCorreo());
         response.setEstado(usuario.getEstado());
         response.setActivo(usuario.getActivo());
@@ -79,9 +113,6 @@ public class UsuarioServiceImpl implements UsuarioService {
     public ResponseEntity<Object> registrarUsuario(RegistrarUsuarioRequest request) {
         if (request.getUsuario() == null || request.getUsuario().isBlank()) {
             return error("El usuario es obligatorio");
-        }
-        if (request.getPassword() == null || request.getPassword().isBlank()) {
-            return error("La contrasenia es obligatoria");
         }
         if (usuarioRepository.existsByUsuarioIgnoreCase(request.getUsuario())) {
             return error("El usuario ya existe");
@@ -104,9 +135,10 @@ public class UsuarioServiceImpl implements UsuarioService {
         UsuarioEntity usuario = new UsuarioEntity();
         usuario.setUsuario(request.getUsuario());
         usuario.setNombres(request.getNombres());
-        usuario.setApellidos(request.getApellidos());
+        usuario.setApePaterno(request.getApePaterno());
+        usuario.setApeMaterno(request.getApeMaterno());
         usuario.setCorreo(request.getCorreo());
-        usuario.setPassword(passwordEncoder.encode(request.getPassword()));
+        usuario.setPassword(passwordEncoder.encode(PASSWORD_USUARIO_NUEVO));
         usuario.setEstado(Boolean.TRUE);
         usuario.setActivo(Boolean.TRUE);
         usuarioRepository.save(usuario);
@@ -154,14 +186,14 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         usuario.setNombres(request.getNombres());
-        usuario.setApellidos(request.getApellidos());
+        usuario.setApePaterno(request.getApePaterno());
+        usuario.setApeMaterno(request.getApeMaterno());
         usuario.setCorreo(request.getCorreo());
         usuario.setFecMod(LocalDateTime.now());
         usuarioRepository.save(usuario);
 
         if (actualizarRoles) {
-            usuarioRolRepository.deleteByIdUsuario(usuario.getIdUsuario());
-            registrarRoles(usuario.getIdUsuario(), idsRoles);
+            actualizarRoles(usuario.getIdUsuario(), idsRoles);
         }
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Usuario actualizado correctamente");
@@ -193,6 +225,31 @@ public class UsuarioServiceImpl implements UsuarioService {
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Usuario eliminado correctamente", data);
     }
 
+    @Override
+    @Transactional
+    public ResponseEntity<Object> activarUsuario(Integer idUsuario) {
+        if (idUsuario == null) {
+            return error("El idUsuario es obligatorio");
+        }
+
+        UsuarioEntity usuario = usuarioRepository.findById(idUsuario).orElse(null);
+        if (usuario == null) {
+            return MessageResponse.setResponse(Boolean.FALSE, HttpStatus.NOT_FOUND, "El usuario no existe");
+        }
+
+        usuario.setActivo(Boolean.TRUE);
+        usuario.setEstado(Boolean.TRUE);
+        usuario.setFecMod(LocalDateTime.now());
+        usuarioRepository.save(usuario);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("idUsuario", usuario.getIdUsuario());
+        data.put("usuario", usuario.getUsuario());
+        data.put("activo", usuario.getActivo());
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Usuario activado correctamente", data);
+    }
+
     private Set<Integer> obtenerRolesValidados(ActualizarUsuarioRequest request) {
         Set<Integer> idsRoles = request.getIdsRoles() == null ? new HashSet<>() : new HashSet<>(request.getIdsRoles());
         if (idsRoles.contains(null)) {
@@ -212,13 +269,36 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private void registrarRoles(Integer idUsuario, Set<Integer> idsRoles) {
         for (Integer idRol : idsRoles) {
-            UsuarioRolEntity usuarioRol = new UsuarioRolEntity();
-            usuarioRol.setIdUsuario(idUsuario);
-            usuarioRol.setIdRol(idRol);
-            usuarioRol.setEstado(Boolean.TRUE);
-            usuarioRol.setActivo(Boolean.TRUE);
-            usuarioRolRepository.save(usuarioRol);
+            usuarioRolRepository.save(crearUsuarioRol(idUsuario, idRol));
         }
+    }
+
+    private void actualizarRoles(Integer idUsuario, Set<Integer> idsRoles) {
+        List<UsuarioRolEntity> rolesExistentes = usuarioRolRepository.findByIdUsuario(idUsuario);
+        Set<Integer> idsRolesExistentes = new HashSet<>();
+        LocalDateTime ahora = LocalDateTime.now();
+
+        for (UsuarioRolEntity usuarioRol : rolesExistentes) {
+            idsRolesExistentes.add(usuarioRol.getIdRol());
+            boolean asignado = idsRoles.contains(usuarioRol.getIdRol());
+            usuarioRol.setActivo(asignado);
+            usuarioRol.setEstado(asignado);
+            usuarioRol.setFecMod(ahora);
+        }
+        usuarioRolRepository.saveAll(rolesExistentes);
+
+        Set<Integer> idsNuevos = new HashSet<>(idsRoles);
+        idsNuevos.removeAll(idsRolesExistentes);
+        registrarRoles(idUsuario, idsNuevos);
+    }
+
+    private UsuarioRolEntity crearUsuarioRol(Integer idUsuario, Integer idRol) {
+        UsuarioRolEntity usuarioRol = new UsuarioRolEntity();
+        usuarioRol.setIdUsuario(idUsuario);
+        usuarioRol.setIdRol(idRol);
+        usuarioRol.setEstado(Boolean.TRUE);
+        usuarioRol.setActivo(Boolean.TRUE);
+        return usuarioRol;
     }
 
     private ResponseEntity<Object> error(String mensaje) {

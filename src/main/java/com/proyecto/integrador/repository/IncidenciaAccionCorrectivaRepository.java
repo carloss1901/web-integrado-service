@@ -19,7 +19,7 @@ public interface IncidenciaAccionCorrectivaRepository
                 a.idAccionCorrectiva AS idAccionCorrectiva,
                 a.idIncidencia AS idIncidencia,
                 a.idUsuario AS idUsuario,
-                CONCAT(CONCAT(u.nombres, ' '), u.apellidos) AS usuario,
+                CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) AS usuario,
                 r.nombre AS rol,
                 a.descripcion AS descripcion,
                 CAST(a.fechaRegistro AS string) AS fechaRegistro

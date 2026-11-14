@@ -25,14 +25,7 @@ public interface UsuarioRolRepository
             @Param("idUsuario") Integer idUsuario
     );
 
-    @Modifying
-    @Query("""
-        DELETE FROM UsuarioRolEntity ur
-        WHERE ur.idUsuario = :idUsuario
-        """)
-    void deleteByIdUsuario(
-            @Param("idUsuario") Integer idUsuario
-    );
+    List<UsuarioRolEntity> findByIdUsuario(Integer idUsuario);
 
     @Modifying
     @Query("""

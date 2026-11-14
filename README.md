@@ -12,7 +12,7 @@ El sistema permite registrar, clasificar, asignar, atender, resolver y cerrar in
 - Spring Security
 - JWT
 - SQL Server 2019
-- H2 para desarrollo y pruebas
+- SQL Server para desarrollo y producción
 - Swagger / OpenAPI
 - Maven
 - JUnit 5
@@ -87,7 +87,7 @@ Los scripts crean:
 
 El perfil predeterminado es `dev`.
 
-Utiliza una base H2 en memoria y habilita Swagger:
+Utiliza SQL Server con las credenciales definidas en `.env` y habilita Swagger:
 
 ```powershell
 mvn spring-boot:run

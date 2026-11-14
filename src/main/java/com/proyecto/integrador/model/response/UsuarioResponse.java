@@ -11,7 +11,8 @@ public class UsuarioResponse {
     private Integer idUsuario;
     private String usuario;
     private String nombres;
-    private String apellidos;
+    private String apePaterno;
+    private String apeMaterno;
     private String correo;
     private Boolean estado;
     private Boolean activo;

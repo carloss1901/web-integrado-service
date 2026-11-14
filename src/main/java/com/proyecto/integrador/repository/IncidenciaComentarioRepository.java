@@ -19,7 +19,7 @@ public interface IncidenciaComentarioRepository
                 c.idComentario AS idComentario,
                 c.idIncidencia AS idIncidencia,
                 c.idUsuario AS idUsuario,
-                CONCAT(CONCAT(u.nombres, ' '), u.apellidos) AS usuario,
+                CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) AS usuario,
                 r.nombre AS rol,
                 c.comentario AS comentario,
                 CAST(c.fechaRegistro AS string) AS fechaRegistro

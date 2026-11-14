@@ -12,7 +12,7 @@ public class ListarUsuarioRequest {
     private String nombres;
     private String apellidos;
     private String correo;
-    private Short estado;
+    private Boolean estado;
 
     @NotNull(message = "{message.required}")
     @Min(value = 1, message = "{message.minOne}")

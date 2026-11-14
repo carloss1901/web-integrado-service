@@ -20,14 +20,16 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
-    public String generateToken(Integer idUsuario, String usuario, String nombres, String apellidos, List<String> roles) {
+    public String generateToken(Integer idUsuario, String usuario, String nombres,
+                                String apePaterno, String apeMaterno, List<String> roles) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expiration);
         return Jwts.builder()
             .setSubject(usuario)
             .claim("idUsuario", idUsuario)
             .claim("nombres", nombres)
-            .claim("apellidos", apellidos)
+            .claim("apePaterno", apePaterno)
+            .claim("apeMaterno", apeMaterno)
             .claim("roles", roles)
             .setIssuedAt(now)
             .setExpiration(exp)
@@ -48,8 +50,12 @@ public class JwtUtil {
         return getClaims(token).get("nombres", String.class);
     }
 
-    public String extractApellidos(String token) {
-        return getClaims(token).get("apellidos", String.class);
+    public String extractApePaterno(String token) {
+        return getClaims(token).get("apePaterno", String.class);
+    }
+
+    public String extractApeMaterno(String token) {
+        return getClaims(token).get("apeMaterno", String.class);
     }
 
     public List<String> extractRoles(String token) {
