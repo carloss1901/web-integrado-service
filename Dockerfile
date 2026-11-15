@@ -7,7 +7,7 @@ COPY pom.xml mvnw mvnw.cmd ./
 COPY .mvn ./.mvn
 COPY src ./src
 
-RUN chmod +x ./mvnw && ./mvnw clean package -DskipTests
+RUN chmod +x ./mvnw && ./mvnw clean package -Dmaven.test.skip=true
 
 # Etapa 2: ejecución
 FROM eclipse-temurin:17-jre
