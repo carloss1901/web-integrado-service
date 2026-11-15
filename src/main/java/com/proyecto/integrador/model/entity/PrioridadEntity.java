@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -29,10 +30,10 @@ public class PrioridadEntity {
     private Integer nivel;
 
     @Column(name = "PUNTAJE_MINIMO")
-    private Integer puntajeMinimo;
+    private BigDecimal puntajeMinimo;
 
     @Column(name = "PUNTAJE_MAXIMO")
-    private Integer puntajeMaximo;
+    private BigDecimal puntajeMaximo;
 
     @Column(name = "ACTIVO")
     private Boolean activo;

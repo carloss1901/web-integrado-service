@@ -46,7 +46,7 @@ public class JwtUtil {
                                 String apePaterno, String apeMaterno, Collection<String> roles) {
         List<JwtRole> jwtRoles = roles.stream().map(nombre -> {
             RolEnum rol = RolEnum.fromCodigo(nombre);
-            return rol == null ? new JwtRole(null, nombre) : new JwtRole(rol.getId(), rol.getCodigo());
+            return rol == null ? new JwtRole(null, nombre) : new JwtRole(rol.getId(), rol.getDescripcion());
         }).toList();
         return generateToken(idUsuario, usuario, nombres, apePaterno, apeMaterno, jwtRoles,
                 jwtRoles.isEmpty() ? null : jwtRoles.get(0));

@@ -111,7 +111,7 @@ public class AuthServiceImpl implements AuthService {
         if (rolEnum == null) {
             return MessageResponse.setResponse(false, HttpStatus.FORBIDDEN, "El rol no esta configurado", null);
         }
-        JwtRole selected = new JwtRole(rolEnum.getId(), rolEnum.getCodigo());
+        JwtRole selected = new JwtRole(rolEnum.getId(), rolEnum.getDescripcion());
         String nuevoToken = jwtUtil.generateToken(idUsuario, jwtUtil.extractUsuario(token),
             jwtUtil.extractNombres(token), jwtUtil.extractApePaterno(token), jwtUtil.extractApeMaterno(token), roles, selected);
         return MessageResponse.setResponse(true, HttpStatus.OK, "Rol seleccionado", nuevoToken);
@@ -119,7 +119,7 @@ public class AuthServiceImpl implements AuthService {
 
     private JwtRole toJwtRole(RolEntity rol) {
         RolEnum rolEnum = resolveRole(rol);
-        return rolEnum == null ? null : new JwtRole(rolEnum.getId(), rolEnum.getCodigo());
+        return rolEnum == null ? null : new JwtRole(rolEnum.getId(), rolEnum.getDescripcion());
     }
 
     private RolEnum resolveRole(RolEntity rol) {

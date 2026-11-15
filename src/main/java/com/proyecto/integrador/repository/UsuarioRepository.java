@@ -3,6 +3,7 @@ package com.proyecto.integrador.repository;
 import com.proyecto.integrador.model.entity.UsuarioEntity;
 import com.proyecto.integrador.model.projection.UsuarioProjection;
 import com.proyecto.integrador.model.request.usuario.ListarUsuarioRequest;
+import com.proyecto.integrador.model.response.ResponsableResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,6 +13,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UsuarioRepository
@@ -181,4 +183,20 @@ public interface UsuarioRepository
             @Param("idUsuario") Integer idUsuario,
             @Param("idRol") Integer idRol
     );
+
+    @Query("""
+        SELECT new com.proyecto.integrador.model.response.ResponsableResponse(
+            u.idUsuario,
+            CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, ''))))
+        )
+        FROM UsuarioEntity u
+        JOIN UsuarioRolEntity ur ON ur.idUsuario = u.idUsuario
+        WHERE u.activo = true
+          AND u.estado = true
+          AND ur.activo = true
+          AND ur.estado = true
+          AND ur.idRol = :idRol
+        ORDER BY u.nombres, u.apePaterno, u.apeMaterno
+        """)
+    List<ResponsableResponse> listarResponsablesActivos(@Param("idRol") Integer idRol);
 }

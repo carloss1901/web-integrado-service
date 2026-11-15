@@ -29,7 +29,7 @@ class JwtUtilTest {
         assertEquals(1, jwtUtil.extractIdUsuario(token));
         assertEquals("Admin", jwtUtil.extractNombres(token));
         assertEquals("Sistema", jwtUtil.extractApellidos(token));
-        assertEquals(List.of(new JwtRole(5, "ADMINISTRADOR")), jwtUtil.extractRoles(token));
+        assertEquals(List.of(new JwtRole(5, "Administrador")), jwtUtil.extractRoles(token));
         assertTrue(jwtUtil.isTokenValid(token, "admin"));
     }
 

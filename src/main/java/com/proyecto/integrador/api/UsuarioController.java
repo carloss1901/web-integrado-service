@@ -4,6 +4,7 @@ import com.proyecto.integrador.model.request.usuario.ActualizarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.ListarUsuarioRequest;
 import com.proyecto.integrador.model.request.usuario.RegistrarUsuarioRequest;
 import com.proyecto.integrador.model.response.UsuarioListadoResponse;
+import com.proyecto.integrador.model.response.ResponsableResponse;
 import com.proyecto.integrador.service.UsuarioService;
 import com.proyecto.integrador.util.CustomPage;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @Tag(name = "Usuario Controller")
 @Validated
@@ -54,6 +56,11 @@ public class UsuarioController {
         rq.setSize(size);
 
         return usuarioService.listarUsuario(rq);
+    }
+
+    @GetMapping(value = "listar-responsables", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<ResponsableResponse> listarResponsablesActivos() {
+        return usuarioService.listarResponsablesActivos();
     }
 
     @GetMapping(value = "{idUsuario}", produces = MediaType.APPLICATION_JSON_VALUE)

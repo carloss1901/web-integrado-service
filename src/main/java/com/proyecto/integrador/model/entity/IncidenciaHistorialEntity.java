@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -39,6 +40,18 @@ public class IncidenciaHistorialEntity {
 
     @Column(name = "DESCRIPCION")
     private String descripcion;
+
+    @Column(name = "IMPACTO")
+    private Integer impacto;
+
+    @Column(name = "URGENCIA")
+    private Integer urgencia;
+
+    @Column(name = "REINCIDENCIA")
+    private Integer reincidencia;
+
+    @Column(name = "PUNTAJE_PRIORIDAD")
+    private BigDecimal puntajePrioridad;
 
     @Column(name = "FECHA_EVENTO")
     private LocalDateTime fechaEvento;

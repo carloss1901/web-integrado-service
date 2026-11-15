@@ -151,7 +151,6 @@ class IncidenciaControllerTest {
         request.setIdSeveridad(1);
         request.setImpacto(2);
         request.setUrgencia(2);
-        request.setReincidencia(0);
 
         when(incidenciaService.clasificarIncidencia(any(ClasificarIncidenciaRequest.class)))
                 .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia clasificada correctamente"));

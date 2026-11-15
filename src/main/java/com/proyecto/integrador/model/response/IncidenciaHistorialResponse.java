@@ -1,5 +1,7 @@
 package com.proyecto.integrador.model.response;
 
+import java.math.BigDecimal;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,5 +17,9 @@ public class IncidenciaHistorialResponse {
     private String valorAnterior;
     private String valorNuevo;
     private String descripcion;
+    private Integer impacto;
+    private Integer urgencia;
+    private Integer reincidencia;
+    private BigDecimal puntajePrioridad;
     private String fechaEvento;
 }

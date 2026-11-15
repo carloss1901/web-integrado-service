@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.math.BigDecimal;
 
 @Repository
 public interface PrioridadRepository
@@ -15,12 +16,14 @@ public interface PrioridadRepository
     @Query("""
         SELECT p
         FROM PrioridadEntity p
-        WHERE :puntaje BETWEEN
-            p.puntajeMinimo AND p.puntajeMaximo
+        WHERE (
+            (:puntaje >= p.puntajeMinimo AND :puntaje < p.puntajeMaximo)
+            OR (p.nivel = 4 AND :puntaje >= p.puntajeMinimo AND :puntaje <= p.puntajeMaximo)
+        )
           AND p.activo = true
         ORDER BY p.nivel DESC
         """)
     Optional<PrioridadEntity> findByPuntaje(
-            @Param("puntaje") Integer puntaje
+            @Param("puntaje") BigDecimal puntaje
     );
 }

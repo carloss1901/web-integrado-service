@@ -1,5 +1,7 @@
 package com.proyecto.integrador.model.request.comunes;
 
+import java.math.BigDecimal;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,8 +12,8 @@ public class MantenerMaestroRequest {
     private String descripcion;
     private String detalle;
     private Integer nivel;
-    private Integer puntajeMinimo;
-    private Integer puntajeMaximo;
+    private BigDecimal puntajeMinimo;
+    private BigDecimal puntajeMaximo;
     private Integer idSeveridad;
     private Integer minutosResolucion;
 }

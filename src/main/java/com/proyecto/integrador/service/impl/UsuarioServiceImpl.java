@@ -9,6 +9,8 @@ import com.proyecto.integrador.model.request.usuario.RegistrarUsuarioRequest;
 import com.proyecto.integrador.model.response.UsuarioResponse;
 import com.proyecto.integrador.model.response.MaestroResponse;
 import com.proyecto.integrador.model.response.UsuarioListadoResponse;
+import com.proyecto.integrador.model.response.ResponsableResponse;
+import com.proyecto.integrador.model.enums.RolEnum;
 import com.proyecto.integrador.repository.RolRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.repository.UsuarioRolRepository;
@@ -54,6 +56,12 @@ public class UsuarioServiceImpl implements UsuarioService {
         var page = usuarioRepository.listarUsuario(request, pageable);
         CustomPage<UsuarioListadoResponse> response = new CustomPage<>(page.map(this::mapearUsuarioListado));
         return response;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResponsableResponse> listarResponsablesActivos() {
+        return usuarioRepository.listarResponsablesActivos(RolEnum.RESPONSABLE_ATENCION.getId());
     }
 
     private UsuarioListadoResponse mapearUsuarioListado(UsuarioProjection projection) {

@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -60,7 +61,7 @@ public class IncidenciaEntity {
     private Integer reincidencia;
 
     @Column(name = "PUNTAJE_PRIORIDAD")
-    private Integer puntajePrioridad;
+    private BigDecimal puntajePrioridad;
 
     @Column(name = "TITULO")
     private String titulo;

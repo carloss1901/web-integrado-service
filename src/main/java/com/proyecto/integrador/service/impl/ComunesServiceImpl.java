@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -377,6 +378,12 @@ public class ComunesServiceImpl implements ComunesService {
     }
 
     private void validarObligatorio(Integer value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    private void validarObligatorio(BigDecimal value, String message) {
         if (value == null) {
             throw new IllegalArgumentException(message);
         }

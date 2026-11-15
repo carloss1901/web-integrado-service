@@ -25,6 +25,10 @@ public interface IncidenciaHistorialRepository
                 h.valorAnterior AS valorAnterior,
                 h.valorNuevo AS valorNuevo,
                 h.descripcion AS descripcion,
+                h.impacto AS impacto,
+                h.urgencia AS urgencia,
+                h.reincidencia AS reincidencia,
+                h.puntajePrioridad AS puntajePrioridad,
                 CAST(h.fechaEvento AS string) AS fechaEvento
             FROM IncidenciaHistorialEntity h
             JOIN UsuarioEntity u

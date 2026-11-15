@@ -22,6 +22,7 @@ import java.time.LocalDate;
 
 public interface IncidenciaService {
     List<IncidenciaResponse> listarIncidencias();
+    List<IncidenciaResponse> listarMisIncidenciasAsignadas(Integer idResponsable);
     List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
             String texto
     );

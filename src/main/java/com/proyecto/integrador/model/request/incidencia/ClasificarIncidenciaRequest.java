@@ -21,16 +21,12 @@ public class ClasificarIncidenciaRequest {
 
     @NotNull(message = "{message.required}")
     @Min(value = 1, message = "{message.minOne}")
-    @Max(value = 3, message = "{message.maxThree}")
+    @Max(value = 4, message = "{message.maxFour}")
     private Integer impacto;
 
     @NotNull(message = "{message.required}")
     @Min(value = 1, message = "{message.minOne}")
-    @Max(value = 3, message = "{message.maxThree}")
+    @Max(value = 4, message = "{message.maxFour}")
     private Integer urgencia;
 
-    @NotNull(message = "{message.required}")
-    @Min(value = 0, message = "{message.minZero}")
-    @Max(value = 1, message = "{message.maxOne}")
-    private Integer reincidencia;
 }

@@ -36,6 +36,7 @@ import com.proyecto.integrador.repository.SlaRepository;
 import com.proyecto.integrador.repository.UbicacionRepository;
 import com.proyecto.integrador.repository.UsuarioRepository;
 import com.proyecto.integrador.service.IncidenciaService;
+import com.proyecto.integrador.service.PrioridadCalculatorService;
 import com.proyecto.integrador.util.CustomPage;
 import com.proyecto.integrador.util.MessageResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.time.LocalDate;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class IncidenciaServiceImpl implements IncidenciaService {
@@ -109,10 +111,25 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Autowired
     private GenericMapper genericMapper;
 
+    @Autowired
+    private PrioridadCalculatorService prioridadCalculatorService;
+
+    @Value("${app.incidencia.prioridad.ventana-reincidencia-dias:30}")
+    private long ventanaReincidenciaDias;
+
     @Override
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listarIncidencias() {
         return genericMapper.toResponseList(incidenciaRepository.listarIncidencias(), IncidenciaResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidenciaResponse> listarMisIncidenciasAsignadas(Integer idResponsable) {
+        return genericMapper.toResponseList(
+            incidenciaRepository.listarIncidenciasPorResponsable(idResponsable),
+            IncidenciaResponse.class
+        );
     }
 
     @Override
@@ -251,6 +268,9 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         incidencia.setTitulo(request.getTitulo());
         incidencia.setDescripcion(request.getDescripcion());
         incidencia.setFecMod(LocalDateTime.now());
+        if (incidencia.getImpacto() != null && incidencia.getUrgencia() != null) {
+            recalcularPrioridad(incidencia, request.getIdUsuario(), LocalDateTime.now());
+        }
         incidenciaRepository.save(incidencia);
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia actualizada correctamente");
@@ -280,10 +300,9 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (!severidadRepository.existsById(request.getIdSeveridad())) {
             return error("La severidad no existe");
         }
-        if (!criterioValido(request.getImpacto(), 1, 3)
-            || !criterioValido(request.getUrgencia(), 1, 3)
-            || !criterioValido(request.getReincidencia(), 0, 1)) {
-            return error("Impacto, urgencia o reincidencia tienen valores invalidos");
+        if (!criterioValido(request.getImpacto(), 1, 4)
+            || !criterioValido(request.getUrgencia(), 1, 4)) {
+            return error("Impacto y urgencia deben tener valores entre 1 y 4");
         }
 
         IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
@@ -291,22 +310,25 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             return errorNotFound("La incidencia no existe");
         }
 
-        Integer puntaje = request.getImpacto() + request.getUrgencia() + request.getReincidencia();
-        PrioridadEntity prioridad = prioridadRepository.findByPuntaje(puntaje)
-            .orElseThrow(() -> new IllegalStateException("No existe prioridad configurada para el puntaje " + puntaje));
+        LocalDateTime ahora = LocalDateTime.now();
+        int reincidencia = calcularReincidencia(incidencia, ahora);
+        PrioridadCalculatorService.Resultado calculo = prioridadCalculatorService.calcular(
+            request.getImpacto(), request.getUrgencia(), reincidencia);
+        PrioridadEntity prioridad = prioridadRepository.findByPuntaje(calculo.puntuacion())
+            .orElseThrow(() -> new IllegalStateException("No existe prioridad configurada para el puntaje " + calculo.puntuacion()));
         SlaEntity sla = slaRepository.findActivoByIdSeveridad(request.getIdSeveridad())
             .orElseThrow(() -> new IllegalStateException("No existe SLA configurado para la severidad"));
 
         registrarCambioSiAplica(incidencia, request.getIdUsuario(), "CAMBIO_SEVERIDAD",
             incidencia.getIdSeveridad(), request.getIdSeveridad(), "Clasificacion de severidad");
-        registrarCambioSiAplica(incidencia, request.getIdUsuario(), "CAMBIO_PRIORIDAD",
-            incidencia.getIdPrioridad(), prioridad.getIdPrioridad(), "Determinacion automatica de prioridad");
+        registrarAuditoriaPrioridad(incidencia, request.getIdUsuario(), prioridad, calculo,
+            request.getImpacto(), request.getUrgencia(), reincidencia);
 
         incidencia.setIdSeveridad(request.getIdSeveridad());
         incidencia.setImpacto(request.getImpacto());
         incidencia.setUrgencia(request.getUrgencia());
-        incidencia.setReincidencia(request.getReincidencia());
-        incidencia.setPuntajePrioridad(puntaje);
+        incidencia.setReincidencia(reincidencia);
+        incidencia.setPuntajePrioridad(calculo.puntuacion());
         incidencia.setIdPrioridad(prioridad.getIdPrioridad());
         incidencia.setIdSla(sla.getIdSla());
         incidencia.setFechaLimite(incidencia.getFechaRegistro().plusMinutes(sla.getMinutosResolucion()));
@@ -315,7 +337,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         incidenciaRepository.save(incidencia);
 
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "CLASIFICACION",
-            null, puntaje.toString(), "Incidencia clasificada y priorizada");
+            null, calculo.puntuacion().toPlainString(), "Incidencia clasificada y priorizada: "
+                + explicacion(calculo, request.getImpacto(), request.getUrgencia(), reincidencia));
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia clasificada correctamente");
     }
@@ -742,6 +765,64 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     private boolean criterioValido(Integer valor, int minimo, int maximo) {
         return valor != null && valor >= minimo && valor <= maximo;
+    }
+
+    private int calcularReincidencia(IncidenciaEntity incidencia, LocalDateTime fechaReferencia) {
+        long cantidad = incidenciaRepository.contarIncidenciasRelacionadas(
+            incidencia.getIdCategoria(), incidencia.getIdUbicacion(),
+            fechaReferencia.minusDays(ventanaReincidenciaDias), fechaReferencia);
+        return Math.min(4, Math.max(1, (int) cantidad));
+    }
+
+    private void recalcularPrioridad(IncidenciaEntity incidencia, Integer idUsuario, LocalDateTime fechaReferencia) {
+        int reincidencia = calcularReincidencia(incidencia, fechaReferencia);
+        PrioridadCalculatorService.Resultado calculo = prioridadCalculatorService.calcular(
+            incidencia.getImpacto(), incidencia.getUrgencia(), reincidencia);
+        PrioridadEntity prioridad = prioridadRepository.findByPuntaje(calculo.puntuacion())
+            .orElseThrow(() -> new IllegalStateException("No existe prioridad configurada para el puntaje " + calculo.puntuacion()));
+        registrarAuditoriaPrioridad(incidencia, idUsuario, prioridad, calculo,
+            incidencia.getImpacto(), incidencia.getUrgencia(), reincidencia);
+        incidencia.setReincidencia(reincidencia);
+        incidencia.setPuntajePrioridad(calculo.puntuacion());
+        incidencia.setIdPrioridad(prioridad.getIdPrioridad());
+    }
+
+    private void registrarAuditoriaPrioridad(IncidenciaEntity incidencia, Integer idUsuario,
+                                             PrioridadEntity prioridad,
+                                             PrioridadCalculatorService.Resultado calculo,
+                                             Integer impacto,
+                                             Integer urgencia,
+                                             int reincidencia) {
+        boolean cambio = incidencia.getIdPrioridad() == null
+            || !incidencia.getIdPrioridad().equals(prioridad.getIdPrioridad())
+            || incidencia.getPuntajePrioridad() == null
+            || incidencia.getPuntajePrioridad().compareTo(calculo.puntuacion()) != 0
+            || incidencia.getReincidencia() == null
+            || incidencia.getReincidencia() != reincidencia;
+        if (cambio) {
+            IncidenciaHistorialEntity historial = new IncidenciaHistorialEntity();
+            historial.setIdIncidencia(incidencia.getIdIncidencia());
+            historial.setIdUsuario(idUsuario);
+            historial.setTipoEvento("CAMBIO_PRIORIDAD");
+            historial.setValorAnterior(valor(incidencia.getIdPrioridad()));
+            historial.setValorNuevo(valor(prioridad.getIdPrioridad()));
+            historial.setImpacto(impacto);
+            historial.setUrgencia(urgencia);
+            historial.setReincidencia(reincidencia);
+            historial.setPuntajePrioridad(calculo.puntuacion());
+            historial.setDescripcion("Prioridad calculada. "
+                + explicacion(calculo, impacto, urgencia, reincidencia));
+            historial.setFechaEvento(LocalDateTime.now());
+            historial.setActivo(Boolean.TRUE);
+            incidenciaHistorialRepository.save(historial);
+        }
+    }
+
+    private String explicacion(PrioridadCalculatorService.Resultado calculo, Integer impacto,
+                               Integer urgencia, int reincidencia) {
+        return "impacto=" + impacto + ", urgencia=" + urgencia + ", reincidencia=" + reincidencia
+            + "; ponderaciones: impacto 40%, urgencia 40% y reincidencia 20%; puntuacion="
+            + calculo.puntuacion().toPlainString() + "; prioridad=" + calculo.prioridad();
     }
 
     private String generarCodigo(LocalDateTime fecha) {

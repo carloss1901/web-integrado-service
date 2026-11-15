@@ -67,6 +67,8 @@ public class SecurityConfig {
                                 RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
                                 RolEnum.SUPERVISOR.getCodigo()
                         )
+                        .requestMatchers(HttpMethod.GET, "/incidencias/mis-asignadas")
+                        .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
 
                         .requestMatchers(
                                 HttpMethod.GET,

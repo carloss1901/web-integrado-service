@@ -45,6 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.math.BigDecimal;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -82,6 +83,9 @@ class IncidenciaServiceImplTest {
 
     @Mock
     private GenericMapper genericMapper;
+
+    @Mock
+    private PrioridadCalculatorService prioridadCalculatorService;
 
     @InjectMocks
     private IncidenciaServiceImpl incidenciaService;
@@ -224,12 +228,11 @@ class IncidenciaServiceImplTest {
         request.setIdSeveridad(1);
         request.setImpacto(2);
         request.setUrgencia(2);
-        request.setReincidencia(0);
 
         IncidenciaEntity incidencia = incidenciaActiva(1, null);
 
         PrioridadEntity prioridad = new PrioridadEntity();
-        prioridad.setIdPrioridad(3);
+        prioridad.setIdPrioridad(2);
 
         SlaEntity sla = new SlaEntity();
         sla.setIdSla(1);
@@ -238,7 +241,10 @@ class IncidenciaServiceImplTest {
         when(usuarioRepository.countUsuarioByRolId(2, 2)).thenReturn(1);
         when(severidadRepository.existsById(1)).thenReturn(true);
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
-        when(prioridadRepository.findByPuntaje(4)).thenReturn(Optional.of(prioridad));
+        when(incidenciaRepository.contarIncidenciasRelacionadas(any(), any(), any(), any())).thenReturn(1L);
+        when(prioridadCalculatorService.calcular(2, 2, 1))
+                .thenReturn(new PrioridadCalculatorService.Resultado(new BigDecimal("1.80"), "MEDIA"));
+        when(prioridadRepository.findByPuntaje(new BigDecimal("1.80"))).thenReturn(Optional.of(prioridad));
         when(slaRepository.findActivoByIdSeveridad(1)).thenReturn(Optional.of(sla));
         when(estadoIncidenciaRepository.findById(2))
             .thenReturn(Optional.of(estado(2, "CLASIFICADA")));
@@ -246,7 +252,7 @@ class IncidenciaServiceImplTest {
         ResponseEntity<Object> response = incidenciaService.clasificarIncidencia(request);
 
         assertEquals(200, response.getStatusCode().value());
-        assertEquals(Integer.valueOf(4), incidencia.getPuntajePrioridad());
+        assertEquals(new BigDecimal("1.80"), incidencia.getPuntajePrioridad());
         verify(incidenciaRepository).save(incidencia);
     }
 

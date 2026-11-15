@@ -1,5 +1,7 @@
 package com.proyecto.integrador.model.projection;
 
+import java.math.BigDecimal;
+
 public interface IncidenciaProjection {
     Integer getIdIncidencia();
     String getCodigo();
@@ -10,7 +12,11 @@ public interface IncidenciaProjection {
     String getSeveridad();
     String getPrioridad();
     String getEstado();
-    Integer getPuntajePrioridad();
+    Integer getImpacto();
+    Integer getUrgencia();
+    Integer getReincidencia();
+    BigDecimal getPuntuacionPrioridad();
+    String getExplicacionPrioridad();
     String getTitulo();
     String getFechaRegistro();
     String getFechaLimite();

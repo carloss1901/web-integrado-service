@@ -53,6 +53,13 @@ public class IncidenciaController {
         return incidenciaService.listarIncidencias();
     }
 
+    @GetMapping(value = "mis-asignadas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<IncidenciaResponse> listarMisIncidenciasAsignadas(
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        return incidenciaService.listarMisIncidenciasAsignadas(idUsuarioAutenticado);
+    }
+
     @GetMapping(
             value = "buscar",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -124,7 +131,11 @@ public class IncidenciaController {
     }
 
     @PutMapping(value = "actualizar", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> actualizarIncidencia(@Valid @RequestBody ActualizarIncidenciaRequest request) {
+    public ResponseEntity<Object> actualizarIncidencia(
+            @Valid @RequestBody ActualizarIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.actualizarIncidencia(request);
     }
 
