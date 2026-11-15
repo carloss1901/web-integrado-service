@@ -20,7 +20,6 @@ public interface IncidenciaHistorialRepository
                 h.idIncidencia AS idIncidencia,
                 h.idUsuario AS idUsuario,
                 CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) AS usuario,
-                r.nombre AS rol,
                 h.tipoEvento AS tipoEvento,
                 h.valorAnterior AS valorAnterior,
                 h.valorNuevo AS valorNuevo,
@@ -33,13 +32,6 @@ public interface IncidenciaHistorialRepository
             FROM IncidenciaHistorialEntity h
             JOIN UsuarioEntity u
               ON u.idUsuario = h.idUsuario
-            LEFT JOIN UsuarioRolEntity ur
-              ON ur.idUsuario = u.idUsuario
-             AND ur.activo = true
-             AND ur.estado = true
-            LEFT JOIN RolEntity r
-              ON r.idRol = ur.idRol
-             AND r.activo = true
             WHERE h.idIncidencia = :idIncidencia
               AND h.activo = true
             ORDER BY h.fechaEvento

@@ -20,7 +20,6 @@ public interface IncidenciaEvidenciaRepository
                 e.idIncidencia AS idIncidencia,
                 e.idUsuario AS idUsuario,
                 CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) AS usuario,
-                r.nombre AS rol,
                 e.nombreArchivo AS nombreArchivo,
                 e.rutaArchivo AS rutaArchivo,
                 e.descripcion AS descripcion,
@@ -28,13 +27,6 @@ public interface IncidenciaEvidenciaRepository
             FROM IncidenciaEvidenciaEntity e
             JOIN UsuarioEntity u
               ON u.idUsuario = e.idUsuario
-            LEFT JOIN UsuarioRolEntity ur
-              ON ur.idUsuario = u.idUsuario
-             AND ur.activo = true
-             AND ur.estado = true
-            LEFT JOIN RolEntity r
-              ON r.idRol = ur.idRol
-             AND r.activo = true
             WHERE e.idIncidencia = :idIncidencia
               AND e.activo = true
             ORDER BY e.fechaRegistro

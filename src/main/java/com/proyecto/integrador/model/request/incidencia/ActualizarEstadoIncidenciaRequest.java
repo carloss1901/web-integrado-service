@@ -11,4 +11,6 @@ public class ActualizarEstadoIncidenciaRequest {
     private Integer idIncidencia;
 
     private Integer idUsuario;
+
+    private String descripcionResolucion;
 }

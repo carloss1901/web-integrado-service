@@ -69,6 +69,8 @@ public class SecurityConfig {
                         )
                         .requestMatchers(HttpMethod.GET, "/incidencias/mis-asignadas")
                         .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
+                        .requestMatchers(HttpMethod.GET, "/incidencias/mis-reportadas")
+                        .hasRole(RolEnum.REPORTANTE.getCodigo())
 
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -118,6 +120,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/incidencias/resolver")
                         .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/cerrar")
+                        .hasRole(RolEnum.SUPERVISOR.getCodigo())
+                        .requestMatchers(HttpMethod.POST, "/incidencias/reabrir")
                         .hasRole(RolEnum.SUPERVISOR.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/acciones-correctivas")
                         .hasAnyRole(

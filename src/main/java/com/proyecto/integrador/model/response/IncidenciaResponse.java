@@ -22,6 +22,7 @@ public class IncidenciaResponse {
     private BigDecimal puntuacionPrioridad;
     private String explicacionPrioridad;
     private String titulo;
+    private String descripcion;
     private String fechaRegistro;
     private String fechaLimite;
     private String fechaResolucion;

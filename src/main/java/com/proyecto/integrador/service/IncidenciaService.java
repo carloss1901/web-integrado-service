@@ -8,6 +8,7 @@ import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectiv
 import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.ReabrirIncidenciaRequest;
 import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
 import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 public interface IncidenciaService {
     List<IncidenciaResponse> listarIncidencias();
     List<IncidenciaResponse> listarMisIncidenciasAsignadas(Integer idResponsable);
+    List<IncidenciaResponse> listarMisIncidenciasReportadas(Integer idReportante);
     List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
             String texto
     );
@@ -48,6 +50,7 @@ public interface IncidenciaService {
     ResponseEntity<Object> iniciarAtencion(ActualizarEstadoIncidenciaRequest request);
     ResponseEntity<Object> resolverIncidencia(ActualizarEstadoIncidenciaRequest request);
     ResponseEntity<Object> cerrarIncidencia(ActualizarEstadoIncidenciaRequest request);
+    ResponseEntity<Object> reabrirIncidencia(ReabrirIncidenciaRequest request);
     ResponseEntity<Object> registrarEvidencia(RegistrarEvidenciaRequest request);
     ResponseEntity<Object> registrarAccionCorrectiva(RegistrarAccionCorrectivaRequest request);
     ResponseEntity<Object> registrarComentario(RegistrarComentarioRequest request);

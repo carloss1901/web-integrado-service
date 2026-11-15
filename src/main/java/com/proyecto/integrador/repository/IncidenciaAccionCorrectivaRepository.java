@@ -20,19 +20,11 @@ public interface IncidenciaAccionCorrectivaRepository
                 a.idIncidencia AS idIncidencia,
                 a.idUsuario AS idUsuario,
                 CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) AS usuario,
-                r.nombre AS rol,
                 a.descripcion AS descripcion,
                 CAST(a.fechaRegistro AS string) AS fechaRegistro
             FROM IncidenciaAccionCorrectivaEntity a
             JOIN UsuarioEntity u
               ON u.idUsuario = a.idUsuario
-            LEFT JOIN UsuarioRolEntity ur
-              ON ur.idUsuario = u.idUsuario
-             AND ur.activo = true
-             AND ur.estado = true
-            LEFT JOIN RolEntity r
-              ON r.idRol = ur.idRol
-             AND r.activo = true
             WHERE a.idIncidencia = :idIncidencia
               AND a.activo = true
             ORDER BY a.fechaRegistro

@@ -18,6 +18,7 @@ public interface IncidenciaProjection {
     BigDecimal getPuntuacionPrioridad();
     String getExplicacionPrioridad();
     String getTitulo();
+    String getDescripcion();
     String getFechaRegistro();
     String getFechaLimite();
     String getFechaResolucion();

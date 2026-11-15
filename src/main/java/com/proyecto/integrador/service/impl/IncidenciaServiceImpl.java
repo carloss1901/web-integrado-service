@@ -18,6 +18,7 @@ import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectiv
 import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.ReabrirIncidenciaRequest;
 import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
 import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
@@ -128,6 +129,15 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     public List<IncidenciaResponse> listarMisIncidenciasAsignadas(Integer idResponsable) {
         return genericMapper.toResponseList(
             incidenciaRepository.listarIncidenciasPorResponsable(idResponsable),
+            IncidenciaResponse.class
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<IncidenciaResponse> listarMisIncidenciasReportadas(Integer idReportante) {
+        return genericMapper.toResponseList(
+            incidenciaRepository.listarIncidenciasPorReportante(idReportante),
             IncidenciaResponse.class
         );
     }
@@ -374,14 +384,17 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Transactional
     public ResponseEntity<Object> iniciarAtencion(ActualizarEstadoIncidenciaRequest request) {
         return cambiarEstadoPorResponsable(request, ESTADO_EN_ATENCION, "INICIO_ATENCION",
-            "Inicio de atencion de incidencia", false, false);
+            "Inicio de atencion de incidencia", false, false, null);
     }
 
     @Override
     @Transactional
     public ResponseEntity<Object> resolverIncidencia(ActualizarEstadoIncidenciaRequest request) {
+        if (request.getDescripcionResolucion() == null || request.getDescripcionResolucion().isBlank()) {
+            return error("La descripcion de resolucion es obligatoria");
+        }
         return cambiarEstadoPorResponsable(request, ESTADO_RESUELTA, "RESOLUCION",
-            "Resolucion de incidencia", true, false);
+            "Resolucion de incidencia", true, false, request.getDescripcionResolucion().trim());
     }
 
     @Override
@@ -433,6 +446,33 @@ public class IncidenciaServiceImpl implements IncidenciaService {
                 HttpStatus.OK,
                 "Incidencia cerrada correctamente"
         );
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> reabrirIncidencia(ReabrirIncidenciaRequest request) {
+        if (!tieneRol(request.getIdUsuario(), ROL_SUPERVISOR)) {
+            return errorForbidden("Solo un supervisor puede reabrir incidencias");
+        }
+
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+        if (!Integer.valueOf(ESTADO_RESUELTA).equals(incidencia.getIdEstado())) {
+            return error("Solo se puede reabrir una incidencia resuelta");
+        }
+
+        String estadoAnterior = valor(incidencia.getIdEstado());
+        incidencia.setIdEstado(obtenerEstado(ESTADO_EN_ATENCION).getIdEstado());
+        incidencia.setFechaResolucion(null);
+        incidencia.setFecMod(LocalDateTime.now());
+        incidenciaRepository.save(incidencia);
+
+        registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "REAPERTURA",
+            estadoAnterior, incidencia.getIdEstado().toString(), request.getObservacion().trim());
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia reabierta correctamente");
     }
 
     @Override
@@ -639,7 +679,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         String tipoEvento,
         String descripcion,
         boolean registrarResolucion,
-        boolean registrarCierre
+        boolean registrarCierre,
+        String descripcionAccionCorrectiva
     ) {
         if (!tieneRol(request.getIdUsuario(), ROL_RESPONSABLE)) {
             return error("El usuario no tiene rol RESPONSABLE_ATENCION");
@@ -664,8 +705,20 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         incidencia.setFecMod(LocalDateTime.now());
         incidenciaRepository.save(incidencia);
 
+        if (descripcionAccionCorrectiva != null) {
+            IncidenciaAccionCorrectivaEntity accion = new IncidenciaAccionCorrectivaEntity();
+            accion.setIdIncidencia(incidencia.getIdIncidencia());
+            accion.setIdUsuario(request.getIdUsuario());
+            accion.setDescripcion(descripcionAccionCorrectiva);
+            accion.setFechaRegistro(LocalDateTime.now());
+            accion.setActivo(Boolean.TRUE);
+            incidenciaAccionCorrectivaRepository.save(accion);
+        }
+
         registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), tipoEvento,
-            estadoAnterior, incidencia.getIdEstado().toString(), descripcion);
+            estadoAnterior, incidencia.getIdEstado().toString(), descripcionAccionCorrectiva == null
+                ? descripcion
+                : descripcion + ": " + descripcionAccionCorrectiva);
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, descripcion);
     }

@@ -8,6 +8,7 @@ import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectiv
 import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.ReabrirIncidenciaRequest;
 import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
 import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
@@ -58,6 +59,13 @@ public class IncidenciaController {
             @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
     ) {
         return incidenciaService.listarMisIncidenciasAsignadas(idUsuarioAutenticado);
+    }
+
+    @GetMapping(value = "mis-reportadas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<IncidenciaResponse> listarMisIncidenciasReportadas(
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        return incidenciaService.listarMisIncidenciasReportadas(idUsuarioAutenticado);
     }
 
     @GetMapping(
@@ -187,6 +195,15 @@ public class IncidenciaController {
     ) {
         request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.cerrarIncidencia(request);
+    }
+
+    @PostMapping(value = "reabrir", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> reabrirIncidencia(
+            @Valid @RequestBody ReabrirIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
+        return incidenciaService.reabrirIncidencia(request);
     }
 
     @PostMapping(value = "evidencias", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -20,19 +20,11 @@ public interface IncidenciaComentarioRepository
                 c.idIncidencia AS idIncidencia,
                 c.idUsuario AS idUsuario,
                 CONCAT(CONCAT(u.nombres, ' '), CONCAT(u.apePaterno, CONCAT(' ', COALESCE(u.apeMaterno, '')))) AS usuario,
-                r.nombre AS rol,
                 c.comentario AS comentario,
                 CAST(c.fechaRegistro AS string) AS fechaRegistro
             FROM IncidenciaComentarioEntity c
             JOIN UsuarioEntity u
               ON u.idUsuario = c.idUsuario
-            LEFT JOIN UsuarioRolEntity ur
-              ON ur.idUsuario = u.idUsuario
-             AND ur.activo = true
-             AND ur.estado = true
-            LEFT JOIN RolEntity r
-              ON r.idRol = ur.idRol
-             AND r.activo = true
             WHERE c.idIncidencia = :idIncidencia
               AND c.activo = true
             ORDER BY c.fechaRegistro

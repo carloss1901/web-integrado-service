@@ -129,6 +129,7 @@ public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, In
         i.puntajePrioridad AS puntuacionPrioridad,
         'Impacto 40%, urgencia 40% y reincidencia 20%' AS explicacionPrioridad,
         i.titulo AS titulo,
+        i.descripcion AS descripcion,
         CAST(i.fechaRegistro AS string) AS fechaRegistro,
         CAST(i.fechaLimite AS string) AS fechaLimite,
         CAST(i.fechaResolucion AS string) AS fechaResolucion,
@@ -173,6 +174,51 @@ public interface IncidenciaRepository extends JpaRepository<IncidenciaEntity, In
         i.puntajePrioridad AS puntuacionPrioridad,
         'Impacto 40%, urgencia 40% y reincidencia 20%' AS explicacionPrioridad,
         i.titulo AS titulo,
+        CAST(i.fechaRegistro AS string) AS fechaRegistro,
+        CAST(i.fechaLimite AS string) AS fechaLimite,
+        CAST(i.fechaResolucion AS string) AS fechaResolucion,
+        CAST(i.fechaCierre AS string) AS fechaCierre
+    FROM IncidenciaEntity i
+    JOIN UsuarioEntity ur
+      ON ur.idUsuario = i.idReportante
+    LEFT JOIN UsuarioEntity ua
+      ON ua.idUsuario = i.idResponsable
+    JOIN CategoriaEntity c
+      ON c.idCategoria = i.idCategoria
+    JOIN UbicacionEntity u
+      ON u.idUbicacion = i.idUbicacion
+    LEFT JOIN SeveridadEntity s
+      ON s.idSeveridad = i.idSeveridad
+    LEFT JOIN PrioridadEntity p
+      ON p.idPrioridad = i.idPrioridad
+    JOIN EstadoIncidenciaEntity e
+      ON e.idEstado = i.idEstado
+    WHERE i.activo = true
+      AND i.idReportante = :idReportante
+    ORDER BY i.fechaRegistro DESC
+    """)
+    List<IncidenciaProjection> listarIncidenciasPorReportante(
+        @Param("idReportante") Integer idReportante
+    );
+
+    @Query("""
+    SELECT
+        i.idIncidencia AS idIncidencia,
+        i.codigo AS codigo,
+        CONCAT(CONCAT(ur.nombres, ' '), CONCAT(ur.apePaterno, CONCAT(' ', COALESCE(ur.apeMaterno, '')))) AS reportante,
+        CONCAT(CONCAT(ua.nombres, ' '), CONCAT(ua.apePaterno, CONCAT(' ', COALESCE(ua.apeMaterno, '')))) AS responsable,
+        c.nombre AS categoria,
+        u.nombre AS ubicacion,
+        s.nombre AS severidad,
+        p.nombre AS prioridad,
+        e.nombre AS estado,
+        i.impacto AS impacto,
+        i.urgencia AS urgencia,
+        i.reincidencia AS reincidencia,
+        i.puntajePrioridad AS puntuacionPrioridad,
+        'Impacto 40%, urgencia 40% y reincidencia 20%' AS explicacionPrioridad,
+        i.titulo AS titulo,
+        i.descripcion AS descripcion,
         CAST(i.fechaRegistro AS string) AS fechaRegistro,
         CAST(i.fechaLimite AS string) AS fechaLimite,
         CAST(i.fechaResolucion AS string) AS fechaResolucion,
