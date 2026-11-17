@@ -27,11 +27,11 @@ INSERT INTO ROL (
     ACTIVO
 )
 VALUES
-    (1, 'REPORTANTE', 1),
-    (2, 'OPERADOR_MESA_CONTROL', 1),
-    (3, 'RESPONSABLE_ATENCION', 1),
-    (4, 'SUPERVISOR', 1),
-    (5, 'ADMINISTRADOR', 1);
+    (1, 'Reportante', 1),
+    (2, 'Operador de mesa de control', 1),
+    (3, 'Responsable de atención', 1),
+    (4, 'Supervisor', 1),
+    (5, 'Administrador', 1);
 
 SET IDENTITY_INSERT ROL OFF;
 
@@ -41,7 +41,8 @@ INSERT INTO USUARIO (
     ID_USUARIO,
     USUARIO,
     NOMBRES,
-    APELLIDOS,
+    APE_PATERNO,
+    APE_MATERNO,
     CORREO,
     PASSWORD,
     ESTADO,
@@ -53,6 +54,7 @@ VALUES
     'admin',
     'Admin',
     'Sistema',
+    NULL,
     'admin@demo.com',
     '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre',
     1,
@@ -62,7 +64,8 @@ VALUES
     2,
     'operador',
     'Operador',
-    'Mesa Control',
+    'Mesa',
+    'Control',
     'operador@demo.com',
     '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre',
     1,
@@ -73,6 +76,7 @@ VALUES
     'responsable',
     'Responsable',
     'Atencion',
+    NULL,
     'responsable@demo.com',
     '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre',
     1,
@@ -83,6 +87,7 @@ VALUES
     'reportante',
     'Usuario',
     'Reportante',
+    NULL,
     'reportante@demo.com',
     '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre',
     1,
@@ -93,6 +98,7 @@ VALUES
     'supervisor',
     'Supervisor',
     'Incidencias',
+    NULL,
     'supervisor@demo.com',
     '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre',
     1,
@@ -241,15 +247,15 @@ INSERT INTO ESTADO_INCIDENCIA (
     ACTIVO
 )
 VALUES
-    (1, 'REGISTRADA', 1),
-    (2, 'CLASIFICADA', 1),
-    (3, 'ASIGNADA', 1),
-    (4, 'EN_ATENCION', 1),
-    (5, 'EN_ESPERA', 1),
-    (6, 'RESUELTA', 1),
-    (7, 'CERRADA', 1),
-    (8, 'CANCELADA', 1),
-    (9, 'REABIERTA', 1);
+    (1, 'Registrada', 1),
+    (2, 'Clasificada', 1),
+    (3, 'Asignada', 1),
+    (4, 'En atención', 1),
+    (5, 'En espera', 1),
+    (6, 'Resuelta', 1),
+    (7, 'Cerrada', 1),
+    (8, 'Cancelada', 1),
+    (9, 'Reabierta', 1);
 
 SET IDENTITY_INSERT ESTADO_INCIDENCIA OFF;
 
@@ -502,7 +508,7 @@ VALUES
     4,
     'REGISTRO_INCIDENCIA',
     NULL,
-    'REGISTRADA',
+    'Registrada',
     'Incidencia registrada por el reportante.',
     DATEADD(HOUR, -3, SYSDATETIME()),
     1
@@ -513,7 +519,7 @@ VALUES
     2,
     'ASIGNACION_RESPONSABLE',
     'SIN_RESPONSABLE',
-    'RESPONSABLE_ATENCION',
+    'Responsable de atención',
     'Incidencia asignada al responsable de atencion.',
     DATEADD(HOUR, -3, SYSDATETIME()),
     1
@@ -523,8 +529,8 @@ VALUES
     6,
     3,
     'CAMBIO_ESTADO',
-    'EN_ATENCION',
-    'RESUELTA',
+    'En atención',
+    'Resuelta',
     'Incidencia solucionada correctamente.',
     DATEADD(DAY, -2, SYSDATETIME()),
     1

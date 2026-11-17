@@ -17,6 +17,7 @@ import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequ
 import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectivaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarRevisionSupervisorRequest;
 import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
 import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
@@ -123,6 +124,7 @@ class IncidenciaControllerTest {
                 .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia actualizada correctamente"));
 
         mockMvc.perform(put("/incidencias/actualizar")
+                        .requestAttr("idUsuarioAutenticado", 1)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -163,6 +165,26 @@ class IncidenciaControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         verify(incidenciaService).clasificarIncidencia(any(ClasificarIncidenciaRequest.class));
+    }
+
+    @Test
+    void registrarRevisionSupervisorDebeUsarUsuarioAutenticado() throws Exception {
+        RegistrarRevisionSupervisorRequest request = new RegistrarRevisionSupervisorRequest();
+        request.setIdIncidencia(1);
+        request.setAprobada(true);
+        request.setObservacion("Revision aprobada.");
+
+        when(incidenciaService.registrarRevisionSupervisor(any(RegistrarRevisionSupervisorRequest.class)))
+                .thenReturn(MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Revision aprobada correctamente"));
+
+        mockMvc.perform(post("/incidencias/revision-supervisor")
+                        .requestAttr("idUsuarioAutenticado", 4)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(incidenciaService).registrarRevisionSupervisor(any(RegistrarRevisionSupervisorRequest.class));
     }
 
     @Test
@@ -349,11 +371,12 @@ class IncidenciaControllerTest {
         response.setTitulo("Equipo no enciende");
         response.setFechaRegistro("03/10/2026 10:30");
 
-        when(incidenciaService.buscarIncidenciasPorTitulo("equipo"))
+        when(incidenciaService.buscarIncidenciasPorTitulo("equipo", null))
                 .thenReturn(List.of(response));
 
         mockMvc.perform(get("/incidencias/buscar")
-                        .param("texto", "equipo"))
+                        .param("texto", "equipo")
+                        .requestAttr("idUsuarioAutenticado", 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].codigo")
                         .value("INC-001"))
@@ -361,7 +384,7 @@ class IncidenciaControllerTest {
                         .value("Equipo no enciende"));
 
         verify(incidenciaService)
-                .buscarIncidenciasPorTitulo("equipo");
+                .buscarIncidenciasPorTitulo("equipo", null);
     }
 
     @Test
@@ -387,5 +410,21 @@ class IncidenciaControllerTest {
                 .andExpect(jsonPath("$.incidenciasCerradas").value(1));
 
         verify(incidenciaService).obtenerIndicadores();
+    }
+
+    @Test
+    void listarIncidenciasPaginadasDebeDelegarFiltrosYPaginacion() throws Exception {
+        CustomPage<IncidenciaResponse> respuesta = new CustomPage<>(new PageImpl<>(List.of(), PageRequest.of(1, 5), 0));
+        when(incidenciaService.listarIncidenciasPaginadas(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(respuesta);
+
+        mockMvc.perform(get("/incidencias/listar-paginado")
+                        .param("idEstado", "4").param("idSeveridad", "3")
+                        .param("inicio", "2026-01-01").param("fin", "2026-01-31")
+                        .param("page", "2").param("size", "5")
+                        .requestAttr("idUsuarioAutenticado", 1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageable.pageNumber").value(2));
+
+        verify(incidenciaService).listarIncidenciasPaginadas(any(), any(), any(), any(), any(), any(), any(), any());
     }
 }

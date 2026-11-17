@@ -39,8 +39,12 @@ public enum RolEnum {
     }
 
     public static RolEnum fromCodigo(String codigo) {
+        if (codigo == null) {
+            return null;
+        }
         return Arrays.stream(values())
-                .filter(rol -> rol.codigo.equalsIgnoreCase(codigo))
+                .filter(rol -> rol.codigo.equalsIgnoreCase(codigo)
+                        || rol.descripcion.equalsIgnoreCase(codigo))
                 .findFirst()
                 .orElse(null);
     }

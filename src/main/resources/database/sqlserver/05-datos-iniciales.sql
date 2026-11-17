@@ -19,31 +19,38 @@ BEGIN TRY
     INSERT INTO ROL (ID_ROL, NOMBRE, ACTIVO)
     SELECT v.ID_ROL, v.NOMBRE, 1
     FROM (VALUES
-        (1, 'REPORTANTE'),
-        (2, 'OPERADOR_MESA_CONTROL'),
-        (3, 'RESPONSABLE_ATENCION'),
-        (4, 'SUPERVISOR'),
-        (5, 'ADMINISTRADOR')
+        (1, 'Reportante'),
+        (2, 'Operador de mesa de control'),
+        (3, 'Responsable de atención'),
+        (4, 'Supervisor'),
+        (5, 'Administrador')
     ) v(ID_ROL, NOMBRE)
     WHERE NOT EXISTS (
         SELECT 1 FROM ROL r WHERE r.ID_ROL = v.ID_ROL OR r.NOMBRE = v.NOMBRE
     );
     SET IDENTITY_INSERT ROL OFF;
 
-    /* Password de demostración: 123456 */
+    /* Actualiza los nombres si la base tenía los códigos técnicos anteriores. */
+    UPDATE ROL
+    SET NOMBRE = CASE ID_ROL
+        WHEN 1 THEN 'Reportante'
+        WHEN 2 THEN 'Operador de mesa de control'
+        WHEN 3 THEN 'Responsable de atención'
+        WHEN 4 THEN 'Supervisor'
+        WHEN 5 THEN 'Administrador'
+    END
+    WHERE ID_ROL BETWEEN 1 AND 5;
+
+    /* Usuario administrador inicial. */
     SET IDENTITY_INSERT USUARIO ON;
     INSERT INTO USUARIO (
-        ID_USUARIO, USUARIO, NOMBRES, APELLIDOS, CORREO, PASSWORD, ESTADO, ACTIVO
+        ID_USUARIO, USUARIO, NOMBRES, APE_PATERNO, APE_MATERNO, CORREO, PASSWORD, ESTADO, ACTIVO
     )
-    SELECT v.ID_USUARIO, v.USUARIO, v.NOMBRES, v.APELLIDOS, v.CORREO,
+    SELECT v.ID_USUARIO, v.USUARIO, v.NOMBRES, v.APE_PATERNO, v.APE_MATERNO, v.CORREO,
            v.PASSWORD, 1, 1
     FROM (VALUES
-        (1, 'admin', 'Admin', 'Sistema', 'admin@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre'),
-        (2, 'operador', 'Operador', 'Mesa Control', 'operador@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre'),
-        (3, 'responsable', 'Responsable', 'Atencion', 'responsable@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre'),
-        (4, 'reportante', 'Usuario', 'Reportante', 'reportante@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre'),
-        (5, 'supervisor', 'Supervisor', 'Incidencias', 'supervisor@demo.com', '$2a$10$UPRZIxR6bNyBJdZTUZcYVe7M8syeIva9qGQQCvOYM5k4BVn9zPEre')
-    ) v(ID_USUARIO, USUARIO, NOMBRES, APELLIDOS, CORREO, PASSWORD)
+        (1, 'admin', 'Admin', 'Sistema', NULL, 'admin@demo.com', '$2a$10$Efa0BQyjCWDzNwwTwzcs6.6A2sceUD4fDCZXqDuDYbAjmX4HXlNjK')
+    ) v(ID_USUARIO, USUARIO, NOMBRES, APE_PATERNO, APE_MATERNO, CORREO, PASSWORD)
     WHERE NOT EXISTS (
         SELECT 1 FROM USUARIO u
         WHERE u.ID_USUARIO = v.ID_USUARIO OR u.USUARIO = v.USUARIO OR u.CORREO = v.CORREO
@@ -54,11 +61,7 @@ BEGIN TRY
     INSERT INTO USUARIO_ROL (ID_USUARIO_ROL, ID_USUARIO, ID_ROL, ESTADO, ACTIVO)
     SELECT v.ID_USUARIO_ROL, v.ID_USUARIO, v.ID_ROL, 1, 1
     FROM (VALUES
-        (1, 1, 5),
-        (2, 2, 2),
-        (3, 3, 3),
-        (4, 4, 1),
-        (5, 5, 4)
+        (1, 1, 5)
     ) v(ID_USUARIO_ROL, ID_USUARIO, ID_ROL)
     WHERE NOT EXISTS (
         SELECT 1 FROM USUARIO_ROL ur
@@ -126,18 +129,33 @@ BEGIN TRY
     INSERT INTO ESTADO_INCIDENCIA (ID_ESTADO, NOMBRE, ACTIVO)
     SELECT v.ID_ESTADO, v.NOMBRE, 1
     FROM (VALUES
-        (1, 'REGISTRADA'),
-        (2, 'CLASIFICADA'),
-        (3, 'ASIGNADA'),
-        (4, 'EN_ATENCION'),
-        (5, 'EN_ESPERA'),
-        (6, 'RESUELTA'),
-        (7, 'CERRADA'),
-        (8, 'CANCELADA'),
-        (9, 'REABIERTA')
+        (1, 'Registrada'),
+        (2, 'Clasificada'),
+        (3, 'Asignada'),
+        (4, 'En atención'),
+        (5, 'En espera'),
+        (6, 'Resuelta'),
+        (7, 'Cerrada'),
+        (8, 'Cancelada'),
+        (9, 'Reabierta')
     ) v(ID_ESTADO, NOMBRE)
     WHERE NOT EXISTS (SELECT 1 FROM ESTADO_INCIDENCIA e WHERE e.ID_ESTADO = v.ID_ESTADO OR e.NOMBRE = v.NOMBRE);
     SET IDENTITY_INSERT ESTADO_INCIDENCIA OFF;
+
+    /* Actualiza los nombres si la base tenía los códigos técnicos anteriores. */
+    UPDATE ESTADO_INCIDENCIA
+    SET NOMBRE = CASE ID_ESTADO
+        WHEN 1 THEN 'Registrada'
+        WHEN 2 THEN 'Clasificada'
+        WHEN 3 THEN 'Asignada'
+        WHEN 4 THEN 'En atención'
+        WHEN 5 THEN 'En espera'
+        WHEN 6 THEN 'Resuelta'
+        WHEN 7 THEN 'Cerrada'
+        WHEN 8 THEN 'Cancelada'
+        WHEN 9 THEN 'Reabierta'
+    END
+    WHERE ID_ESTADO BETWEEN 1 AND 9;
 
     SET IDENTITY_INSERT SLA ON;
     INSERT INTO SLA (ID_SLA, ID_SEVERIDAD, MINUTOS_RESOLUCION, ACTIVO)

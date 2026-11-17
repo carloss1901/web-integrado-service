@@ -4,11 +4,13 @@ import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenc
 import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.CambiarEstadoIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectivaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.ReabrirIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarRevisionSupervisorRequest;
 import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
 import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
@@ -23,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
+import com.proyecto.integrador.model.response.DashboardIncidenciasResponse;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -52,6 +56,17 @@ public class IncidenciaController {
     @GetMapping(value = "listar", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<IncidenciaResponse> listarIncidencias() {
         return incidenciaService.listarIncidencias();
+    }
+
+    @GetMapping(value = "listar-paginado", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CustomPage<IncidenciaResponse> listarIncidenciasPaginadas(
+            @RequestParam(required = false) Integer idResponsable, @RequestParam(required = false) Integer idSeveridad,
+            @RequestParam(required = false) Integer idEstado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
+            @RequestParam(defaultValue = "1") @Min(1) Integer page, @RequestParam(defaultValue = "10") @Min(1) Integer size,
+            Authentication authentication, @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado) {
+        return incidenciaService.listarIncidenciasPaginadas(idReportanteParaBusqueda(authentication, idUsuarioAutenticado), idResponsable, idSeveridad, idEstado, inicio, fin, page, size);
     }
 
     @GetMapping(value = "mis-asignadas", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -74,9 +89,14 @@ public class IncidenciaController {
     )
     public List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
             @NotBlank(message = "{message.required}")
-            @RequestParam("texto") String texto
+            @RequestParam("texto") String texto,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado,
+            Authentication authentication
     ) {
-        return incidenciaService.buscarIncidenciasPorTitulo(texto);
+        return incidenciaService.buscarIncidenciasPorTitulo(
+                texto,
+                idReportanteParaBusqueda(authentication, idUsuarioAutenticado)
+        );
     }
 
     @GetMapping(
@@ -90,11 +110,14 @@ public class IncidenciaController {
 
             @RequestParam("fin")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate fin
+            LocalDate fin,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado,
+            Authentication authentication
     ) {
         return incidenciaService.buscarIncidenciasPorFechas(
                 inicio,
-                fin
+                fin,
+                idReportanteParaBusqueda(authentication, idUsuarioAutenticado)
         );
     }
 
@@ -111,6 +134,18 @@ public class IncidenciaController {
         );
     }
 
+    @GetMapping(value = "proximas-a-vencer", produces = MediaType.APPLICATION_JSON_VALUE)
+    public CustomPage<IncidenciaResponse> listarIncidenciasProximasAVencer(
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "horas", defaultValue = "24") Integer horas,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @Min(value = 1, message = "{message.minOne}")
+            @RequestParam(value = "size", defaultValue = "10") Integer size
+    ) {
+        return incidenciaService.listarIncidenciasProximasAVencer(horas, page, size);
+    }
+
     @GetMapping(
             value = "indicadores",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -118,6 +153,12 @@ public class IncidenciaController {
     public IndicadoresIncidenciaResponse obtenerIndicadores() {
         return incidenciaService.obtenerIndicadores();
     }
+
+    @GetMapping(value = "dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
+    public DashboardIncidenciasResponse obtenerDashboardIncidencias(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin
+    ) { return incidenciaService.obtenerDashboardIncidencias(inicio, fin); }
 
     @GetMapping(value = "{idIncidencia}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> obtenerIncidencia(
@@ -179,6 +220,24 @@ public class IncidenciaController {
         return incidenciaService.iniciarAtencion(request);
     }
 
+    @PostMapping(value = "poner-en-espera", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> ponerEnEspera(
+            @Valid @RequestBody CambiarEstadoIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
+        return incidenciaService.ponerEnEspera(request);
+    }
+
+    @PostMapping(value = "reanudar-atencion", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> reanudarAtencion(
+            @Valid @RequestBody CambiarEstadoIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
+        return incidenciaService.reanudarAtencion(request);
+    }
+
     @PostMapping(value = "resolver", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> resolverIncidencia(
             @Valid @RequestBody ActualizarEstadoIncidenciaRequest request,
@@ -197,6 +256,15 @@ public class IncidenciaController {
         return incidenciaService.cerrarIncidencia(request);
     }
 
+    @PostMapping(value = "revision-supervisor", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> registrarRevisionSupervisor(
+            @Valid @RequestBody RegistrarRevisionSupervisorRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
+        return incidenciaService.registrarRevisionSupervisor(request);
+    }
+
     @PostMapping(value = "reabrir", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> reabrirIncidencia(
             @Valid @RequestBody ReabrirIncidenciaRequest request,
@@ -204,6 +272,15 @@ public class IncidenciaController {
     ) {
         request.setIdUsuario(idUsuarioAutenticado);
         return incidenciaService.reabrirIncidencia(request);
+    }
+
+    @PostMapping(value = "cancelar", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> cancelarIncidencia(
+            @Valid @RequestBody CambiarEstadoIncidenciaRequest request,
+            @RequestAttribute("idUsuarioAutenticado") Integer idUsuarioAutenticado
+    ) {
+        request.setIdUsuario(idUsuarioAutenticado);
+        return incidenciaService.cancelarIncidencia(request);
     }
 
     @PostMapping(value = "evidencias", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -299,5 +376,16 @@ public class IncidenciaController {
                 page,
                 size
         );
+    }
+
+    private Integer idReportanteParaBusqueda(
+            Authentication authentication,
+            Integer idUsuarioAutenticado
+    ) {
+        boolean esReportante = authentication != null
+                && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_REPORTANTE".equals(authority.getAuthority()));
+
+        return esReportante ? idUsuarioAutenticado : null;
     }
 }

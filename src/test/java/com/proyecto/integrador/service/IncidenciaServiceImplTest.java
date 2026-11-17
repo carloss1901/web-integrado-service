@@ -5,19 +5,25 @@ import com.proyecto.integrador.model.entity.EstadoIncidenciaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaEntity;
 import com.proyecto.integrador.model.entity.PrioridadEntity;
 import com.proyecto.integrador.model.entity.SlaEntity;
+import com.proyecto.integrador.model.entity.SeveridadEntity;
 import com.proyecto.integrador.model.projection.IncidenciaProjection;
 import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.CambiarEstadoIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.ReabrirIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarRevisionSupervisorRequest;
 import com.proyecto.integrador.model.response.IncidenciaResponse;
 import com.proyecto.integrador.repository.CategoriaRepository;
 import com.proyecto.integrador.repository.EstadoIncidenciaRepository;
 import com.proyecto.integrador.repository.IncidenciaEvidenciaRepository;
 import com.proyecto.integrador.repository.IncidenciaHistorialRepository;
+import com.proyecto.integrador.repository.IncidenciaAccionCorrectivaRepository;
 import com.proyecto.integrador.repository.IncidenciaRepository;
+import com.proyecto.integrador.repository.IncidenciaRevisionSupervisorRepository;
 import com.proyecto.integrador.repository.PrioridadRepository;
 import com.proyecto.integrador.repository.SeveridadRepository;
 import com.proyecto.integrador.repository.SlaRepository;
@@ -58,7 +64,13 @@ class IncidenciaServiceImplTest {
     private IncidenciaHistorialRepository incidenciaHistorialRepository;
 
     @Mock
+    private IncidenciaRevisionSupervisorRepository incidenciaRevisionSupervisorRepository;
+
+    @Mock
     private IncidenciaEvidenciaRepository incidenciaEvidenciaRepository;
+
+    @Mock
+    private IncidenciaAccionCorrectivaRepository incidenciaAccionCorrectivaRepository;
 
     @Mock
     private UsuarioRepository usuarioRepository;
@@ -117,7 +129,7 @@ class IncidenciaServiceImplTest {
         request.setTitulo("No enciende el equipo");
         request.setDescripcion("El equipo no muestra imagen");
 
-        when(usuarioRepository.countUsuarioByRolId(1, 4)).thenReturn(1);
+        when(usuarioRepository.countUsuarioByRolId(1, 1)).thenReturn(1);
         when(categoriaRepository.existsById(1)).thenReturn(true);
         when(ubicacionRepository.existsById(1)).thenReturn(true);
         when(estadoIncidenciaRepository.findById(1))
@@ -138,7 +150,7 @@ class IncidenciaServiceImplTest {
     @Test
     void registrarIncidenciaDebeFallarSinRolReportante() {
         RegistrarIncidenciaRequest request = new RegistrarIncidenciaRequest();
-        when(usuarioRepository.countUsuarioByRolId(1, 4)).thenReturn(0);
+        when(usuarioRepository.countUsuarioByRolId(1, 1)).thenReturn(0);
 
         ResponseEntity<Object> response = incidenciaService.registrarIncidencia(request, 1);
 
@@ -188,7 +200,7 @@ class IncidenciaServiceImplTest {
 
         when(incidenciaRepository.findById(1))
                 .thenReturn(Optional.of(incidencia));
-        when(usuarioRepository.countUsuarioByRolId(1, 1))
+        when(usuarioRepository.countUsuarioByRolId(1, 5))
                 .thenReturn(1);
         when(incidenciaRepository.obtenerIncidencia(1))
                 .thenReturn(Optional.of(projection));
@@ -211,7 +223,7 @@ class IncidenciaServiceImplTest {
         when(usuarioRepository.countUsuarioByRolId(anyInt(), anyInt()))
                 .thenAnswer(invocation -> {
                     Integer idRol = invocation.getArgument(1);
-                    return Integer.valueOf(4).equals(idRol) ? 1 : 0;
+                    return Integer.valueOf(1).equals(idRol) ? 1 : 0;
                 });
 
         ResponseEntity<Object> response =
@@ -263,9 +275,11 @@ class IncidenciaServiceImplTest {
         request.setIdUsuario(2);
         request.setIdResponsable(3);
 
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+        incidencia.setIdEstado(2);
         when(usuarioRepository.countUsuarioByRolId(2, 2)).thenReturn(1);
         when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
-        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, null)));
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
         when(estadoIncidenciaRepository.findById(3))
             .thenReturn(Optional.of(estado(3, "ASIGNADA")));
 
@@ -280,9 +294,12 @@ class IncidenciaServiceImplTest {
         ActualizarEstadoIncidenciaRequest request = new ActualizarEstadoIncidenciaRequest();
         request.setIdIncidencia(1);
         request.setIdUsuario(3);
+        request.setDescripcionResolucion("La incidencia fue resuelta");
 
+        IncidenciaEntity incidencia = incidenciaActiva(1, 3);
+        incidencia.setIdEstado(3);
         when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
-        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, 3)));
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
         when(estadoIncidenciaRepository.findById(4))
             .thenReturn(Optional.of(estado(4, "EN_ATENCION")));
 
@@ -297,9 +314,12 @@ class IncidenciaServiceImplTest {
         ActualizarEstadoIncidenciaRequest request = new ActualizarEstadoIncidenciaRequest();
         request.setIdIncidencia(1);
         request.setIdUsuario(3);
+        request.setDescripcionResolucion("La incidencia fue resuelta");
 
+        IncidenciaEntity incidencia = incidenciaActiva(1, 3);
+        incidencia.setIdEstado(4);
         when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
-        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, 3)));
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
         when(estadoIncidenciaRepository.findById(6))
             .thenReturn(Optional.of(estado(6, "RESUELTA")));
 
@@ -307,6 +327,82 @@ class IncidenciaServiceImplTest {
 
         assertEquals(200, response.getStatusCode().value());
         verify(incidenciaRepository).save(any(IncidenciaEntity.class));
+    }
+
+    @Test
+    void ponerEnEsperaDebePermitirSoloIncidenciaEnAtencion() {
+        CambiarEstadoIncidenciaRequest request = new CambiarEstadoIncidenciaRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(3);
+        request.setObservacion("Pendiente de repuesto externo");
+        IncidenciaEntity incidencia = incidenciaActiva(1, 3);
+        incidencia.setIdEstado(4);
+
+        when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
+        when(estadoIncidenciaRepository.findById(5)).thenReturn(Optional.of(estado(5, "EN_ESPERA")));
+
+        ResponseEntity<Object> response = incidenciaService.ponerEnEspera(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(5, incidencia.getIdEstado());
+    }
+
+    @Test
+    void reanudarAtencionDebePermitirEsperaYReabierta() {
+        CambiarEstadoIncidenciaRequest request = new CambiarEstadoIncidenciaRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(3);
+        request.setObservacion("Repuesto recibido");
+        IncidenciaEntity incidencia = incidenciaActiva(1, 3);
+        incidencia.setIdEstado(5);
+
+        when(usuarioRepository.countUsuarioByRolId(3, 3)).thenReturn(1);
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
+        when(estadoIncidenciaRepository.findById(4)).thenReturn(Optional.of(estado(4, "EN_ATENCION")));
+
+        ResponseEntity<Object> response = incidenciaService.reanudarAtencion(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(4, incidencia.getIdEstado());
+    }
+
+    @Test
+    void cancelarIncidenciaDebeExigirTransicionPermitida() {
+        CambiarEstadoIncidenciaRequest request = new CambiarEstadoIncidenciaRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(2);
+        request.setObservacion("Registro duplicado");
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+        incidencia.setIdEstado(2);
+
+        when(usuarioRepository.countUsuarioByRolId(2, 2)).thenReturn(1);
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
+        when(estadoIncidenciaRepository.findById(8)).thenReturn(Optional.of(estado(8, "CANCELADA")));
+
+        ResponseEntity<Object> response = incidenciaService.cancelarIncidencia(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(8, incidencia.getIdEstado());
+    }
+
+    @Test
+    void reabrirIncidenciaDebeCambiarAEstadoReabierta() {
+        ReabrirIncidenciaRequest request = new ReabrirIncidenciaRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(4);
+        request.setObservacion("La evidencia de resolución es insuficiente");
+        IncidenciaEntity incidencia = incidenciaActiva(1, 3);
+        incidencia.setIdEstado(6);
+
+        when(usuarioRepository.countUsuarioByRolId(4, 4)).thenReturn(1);
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
+        when(estadoIncidenciaRepository.findById(9)).thenReturn(Optional.of(estado(9, "REABIERTA")));
+
+        ResponseEntity<Object> response = incidenciaService.reabrirIncidencia(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(9, incidencia.getIdEstado());
     }
 
     @Test
@@ -320,7 +416,7 @@ class IncidenciaServiceImplTest {
         IncidenciaEntity incidencia = incidenciaActiva(1, null);
         incidencia.setIdEstado(6);
 
-        when(usuarioRepository.countUsuarioByRolId(4, 5))
+        when(usuarioRepository.countUsuarioByRolId(4, 4))
                 .thenReturn(1);
 
         when(incidenciaRepository.findById(1))
@@ -340,6 +436,53 @@ class IncidenciaServiceImplTest {
     }
 
     @Test
+    void cerrarIncidenciaCriticaDebeRechazarseSinRevisionAprobada() {
+        ActualizarEstadoIncidenciaRequest request = new ActualizarEstadoIncidenciaRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(4);
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+        incidencia.setIdEstado(6);
+        incidencia.setIdSeveridad(4);
+        SeveridadEntity severidad = new SeveridadEntity();
+        severidad.setNivel(4);
+
+        when(usuarioRepository.countUsuarioByRolId(4, 4)).thenReturn(1);
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
+        when(severidadRepository.findById(4)).thenReturn(Optional.of(severidad));
+        when(incidenciaRevisionSupervisorRepository.findTopByIdIncidenciaAndActivoTrueOrderByFechaRevisionDesc(1))
+            .thenReturn(Optional.empty());
+
+        ResponseEntity<Object> response = incidenciaService.cerrarIncidencia(request);
+
+        assertEquals(400, response.getStatusCode().value());
+        verify(incidenciaRepository, never()).save(any(IncidenciaEntity.class));
+    }
+
+    @Test
+    void registrarRevisionSupervisorDebePersistirAprobacionDeIncidenciaCriticaResuelta() {
+        RegistrarRevisionSupervisorRequest request = new RegistrarRevisionSupervisorRequest();
+        request.setIdIncidencia(1);
+        request.setIdUsuario(4);
+        request.setAprobada(true);
+        request.setObservacion("La resolucion fue validada.");
+        IncidenciaEntity incidencia = incidenciaActiva(1, null);
+        incidencia.setIdEstado(6);
+        incidencia.setIdSeveridad(4);
+        SeveridadEntity severidad = new SeveridadEntity();
+        severidad.setNivel(4);
+
+        when(usuarioRepository.countUsuarioByRolId(4, 4)).thenReturn(1);
+        when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidencia));
+        when(severidadRepository.findById(4)).thenReturn(Optional.of(severidad));
+
+        ResponseEntity<Object> response = incidenciaService.registrarRevisionSupervisor(request);
+
+        assertEquals(200, response.getStatusCode().value());
+        verify(incidenciaRevisionSupervisorRepository).save(any());
+        verify(incidenciaHistorialRepository).save(any());
+    }
+
+    @Test
     void registrarEvidenciaDebeResponderOk() {
         RegistrarEvidenciaRequest request = new RegistrarEvidenciaRequest();
         request.setIdIncidencia(1);
@@ -348,6 +491,9 @@ class IncidenciaServiceImplTest {
         request.setRutaArchivo("/evidencias/captura.png");
 
         when(incidenciaRepository.findById(1)).thenReturn(Optional.of(incidenciaActiva(1, null)));
+        when(usuarioRepository.countUsuarioByRolId(1, 5)).thenReturn(0);
+        when(usuarioRepository.countUsuarioByRolId(1, 2)).thenReturn(0);
+        when(usuarioRepository.countUsuarioByRolId(1, 4)).thenReturn(0);
         when(usuarioRepository.countUsuarioByRolId(1, 1)).thenReturn(1);
         when(usuarioRepository.existsById(1)).thenReturn(true);
 
@@ -397,7 +543,7 @@ class IncidenciaServiceImplTest {
         IncidenciaEntity incidencia = incidenciaActiva(1, null);
         incidencia.setIdEstado(4);
 
-        when(usuarioRepository.countUsuarioByRolId(4, 5))
+        when(usuarioRepository.countUsuarioByRolId(4, 4))
                 .thenReturn(1);
 
         when(incidenciaRepository.findById(1))
@@ -420,7 +566,7 @@ class IncidenciaServiceImplTest {
         request.setIdIncidencia(1);
         request.setIdUsuario(4);
 
-        when(usuarioRepository.countUsuarioByRolId(4, 5))
+        when(usuarioRepository.countUsuarioByRolId(4, 4))
                 .thenReturn(0);
 
         ResponseEntity<Object> response =
@@ -442,12 +588,13 @@ class IncidenciaServiceImplTest {
                         LocalDateTime.of(2026, 10, 3, 10, 30)
                 );
 
-        when(incidenciaRepository.buscarResumenPorTitulo("equipo"))
+        when(incidenciaRepository.buscarResumenPorTitulo("equipo", 4))
                 .thenReturn(List.of(response));
 
         List<IncidenciaBusquedaResponse> resultado =
                 incidenciaService.buscarIncidenciasPorTitulo(
-                        " equipo "
+                        " equipo ",
+                        4
                 );
 
         assertEquals(1, resultado.size());
@@ -462,6 +609,6 @@ class IncidenciaServiceImplTest {
         );
 
         verify(incidenciaRepository)
-                .buscarResumenPorTitulo("equipo");
+                .buscarResumenPorTitulo("equipo", 4);
     }
 }

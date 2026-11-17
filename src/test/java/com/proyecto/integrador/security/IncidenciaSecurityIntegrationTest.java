@@ -12,13 +12,18 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import com.proyecto.integrador.config.Cors;
 import java.util.List;
+import java.time.LocalDate;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import org.springframework.http.HttpHeaders;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @WebMvcTest(
         controllers = IncidenciaController.class,
@@ -62,6 +67,7 @@ class IncidenciaSecurityIntegrationTest {
                 "reportante",
                 "Usuario",
                 "Reportante",
+                null,
                 List.of("REPORTANTE")
         );
 
@@ -77,6 +83,7 @@ class IncidenciaSecurityIntegrationTest {
                 "admin",
                 "Administrador",
                 "Sistema",
+                null,
                 List.of("ADMINISTRADOR")
         );
 
@@ -89,11 +96,11 @@ class IncidenciaSecurityIntegrationTest {
     }
 
     @Test
-    void peticionCorsDesdeReactDebeResponderCorrectamente() throws Exception {
+    void peticionCorsDesdeAngularDebeResponderCorrectamente() throws Exception {
         mockMvc.perform(options("/incidencias/listar")
                         .header(
                                 HttpHeaders.ORIGIN,
-                                "http://localhost:5173"
+                                "http://localhost:4200"
                         )
                         .header(
                                 HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD,
@@ -102,7 +109,7 @@ class IncidenciaSecurityIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-                        "http://localhost:5173"
+                                "http://localhost:4200"
                 ))
                 .andExpect(header().string(
                         HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
@@ -117,6 +124,7 @@ class IncidenciaSecurityIntegrationTest {
                 "reportante",
                 "Usuario",
                 "Reportante",
+                null,
                 List.of("REPORTANTE")
         );
 
@@ -135,6 +143,7 @@ class IncidenciaSecurityIntegrationTest {
                 "admin",
                 "Administrador",
                 "Sistema",
+                null,
                 List.of("ADMINISTRADOR")
         );
 
@@ -147,5 +156,70 @@ class IncidenciaSecurityIntegrationTest {
                                 "Bearer " + token
                         ))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void reportanteNoPuedeCambiarElIdParaConsultarIncidenciaAjena() throws Exception {
+        String token = jwtUtil.generateToken(
+                4, "reportante", "Usuario", "Reportante", null, List.of("REPORTANTE")
+        );
+        when(incidenciaService.obtenerIncidencia(99, 4))
+                .thenReturn(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+
+        mockMvc.perform(get("/incidencias/99")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+
+        verify(incidenciaService).obtenerIncidencia(99, 4);
+    }
+
+    @Test
+    void busquedaPorTituloDeReportanteIgnoraParametrosDeOtroPropietario() throws Exception {
+        String token = jwtUtil.generateToken(
+                4, "reportante", "Usuario", "Reportante", null, List.of("REPORTANTE")
+        );
+        when(incidenciaService.buscarIncidenciasPorTitulo("equipo", 4))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/incidencias/buscar")
+                        .param("texto", "equipo")
+                        .param("idReportante", "1")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        verify(incidenciaService).buscarIncidenciasPorTitulo("equipo", 4);
+    }
+
+    @Test
+    void busquedaPorFechasDeReportanteUsaLaIdentidadDelToken() throws Exception {
+        String token = jwtUtil.generateToken(
+                4, "reportante", "Usuario", "Reportante", null, List.of("REPORTANTE")
+        );
+        LocalDate inicio = LocalDate.of(2026, 1, 1);
+        LocalDate fin = LocalDate.of(2026, 12, 31);
+        when(incidenciaService.buscarIncidenciasPorFechas(inicio, fin, 4))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/incidencias/buscar-por-fechas")
+                        .param("inicio", "2026-01-01")
+                        .param("fin", "2026-12-31")
+                        .param("idReportante", "1")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        verify(incidenciaService).buscarIncidenciasPorFechas(inicio, fin, 4);
+    }
+
+    @Test
+    void reportanteNoPuedeRegistrarRevisionDeSupervisorPorLlamadaDirecta() throws Exception {
+        String token = jwtUtil.generateToken(
+                4, "reportante", "Usuario", "Reportante", null, List.of("REPORTANTE")
+        );
+
+        mockMvc.perform(post("/incidencias/revision-supervisor")
+                        .contentType("application/json")
+                        .content("{\"idIncidencia\":1,\"aprobada\":true,\"observacion\":\"Intento no autorizado\"}")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 }

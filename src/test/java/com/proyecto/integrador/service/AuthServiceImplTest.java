@@ -51,7 +51,8 @@ class AuthServiceImplTest {
         usuario.setIdUsuario(1);
         usuario.setUsuario("admin");
         usuario.setNombres("Admin");
-        usuario.setApellidos("Sistema");
+        usuario.setApePaterno("Sistema");
+        usuario.setApeMaterno(null);
         usuario.setPassword(
                 "$2a$10$passwordCodificadoParaPrueba"
         );
@@ -70,7 +71,7 @@ class AuthServiceImplTest {
         when(usuarioRepository.findByUsuarioIgnoreCase("admin")).thenReturn(Optional.of(usuario));
         when(usuarioRolRepository.listarIdsRolesPorUsuario(1)).thenReturn(List.of(5));
         when(rolRepository.findAllById(List.of(5))).thenReturn(List.of(rol));
-        when(jwtUtil.generateToken(1, "admin", "Admin", "Sistema", List.of(new JwtRole(5, "Administrador")), null)).thenReturn("token-demo");
+        when(jwtUtil.generateToken(1, "admin", "Admin", "Sistema", null, List.of(new JwtRole(5, "Administrador")), null)).thenReturn("token-demo");
         when(passwordEncoder.matches(
                 "123456",
                 usuario.getPassword()
@@ -86,7 +87,7 @@ class AuthServiceImplTest {
         Map<?, ?> body = (Map<?, ?>) response.getBody();
         assertEquals(true, body.get("success"));
         assertEquals("token-demo", body.get("data"));
-        verify(jwtUtil).generateToken(1, "admin", "Admin", "Sistema", List.of(new JwtRole(5, "Administrador")), null);
+        verify(jwtUtil).generateToken(1, "admin", "Admin", "Sistema", null, List.of(new JwtRole(5, "Administrador")), null);
     }
 
     @Test

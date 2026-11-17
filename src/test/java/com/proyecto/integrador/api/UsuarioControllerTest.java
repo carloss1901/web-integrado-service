@@ -48,9 +48,9 @@ class UsuarioControllerTest {
     @Test
     void registrarUsuarioDebeResponderOk() throws Exception {
         RegistrarUsuarioRequest request = new RegistrarUsuarioRequest();
-        request.setUsuario("jperez");
+        request.setUsuario("12345678");
         request.setNombres("Juan");
-        request.setApellidos("Perez");
+        request.setApePaterno("Perez");
         request.setCorreo("jperez@demo.com");
         request.setPassword("123456");
         request.setIdsRoles(List.of(4));
@@ -73,7 +73,7 @@ class UsuarioControllerTest {
         ActualizarUsuarioRequest request = new ActualizarUsuarioRequest();
         request.setIdUsuario(1);
         request.setNombres("Juan");
-        request.setApellidos("Perez");
+        request.setApePaterno("Perez");
         request.setCorreo("jperez@demo.com");
         request.setIdsRoles(List.of(2, 4));
 

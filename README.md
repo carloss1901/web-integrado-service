@@ -73,7 +73,7 @@ Orden de ejecución sobre una base vacía:
 
 Los scripts crean:
 
-- 14 tablas relacionadas.
+- 15 tablas relacionadas.
 - Claves primarias y foráneas.
 - Restricciones e índices.
 - Catálogos.
@@ -184,11 +184,28 @@ Las credenciales incluidas en los datos de prueba son solamente demostrativas y 
 | POST | `/incidencias/clasificar` | Clasificar incidencia |
 | POST | `/incidencias/asignar-responsable` | Asignar responsable |
 | POST | `/incidencias/iniciar-atencion` | Iniciar atención |
+| POST | `/incidencias/poner-en-espera` | Registrar una espera temporal |
+| POST | `/incidencias/reanudar-atencion` | Reanudar la atención |
 | POST | `/incidencias/resolver` | Resolver incidencia |
 | POST | `/incidencias/cerrar` | Cerrar incidencia |
+| POST | `/incidencias/reabrir` | Reabrir una resolución observada |
+| POST | `/incidencias/cancelar` | Cancelar una incidencia no atendida |
 | POST | `/incidencias/evidencias` | Registrar evidencia |
 | POST | `/incidencias/acciones-correctivas` | Registrar acción correctiva |
 | POST | `/incidencias/comentarios` | Registrar comentario |
+
+### Flujo único de estados
+
+| Estado actual | Siguiente estado permitido | Rol que ejecuta la acción | Uso |
+|---|---|---|---|
+| Registrada | Clasificada / Cancelada | Operador | Clasificación inicial o descarte justificado. |
+| Clasificada | Asignada / Cancelada | Operador | Asignación de responsable o descarte justificado. |
+| Asignada | En atención / Cancelada | Responsable / Operador | Inicio del trabajo o cancelación antes de atender. |
+| En atención | En espera / Resuelta | Responsable | Bloqueo temporal justificado o resolución documentada. |
+| En espera | En atención / Cancelada | Responsable / Operador | Se reanuda al desaparecer el bloqueo; el operador puede cancelarla con motivo. |
+| Resuelta | Cerrada / Reabierta | Supervisor | Cierre definitivo o devolución por observación. |
+| Reabierta | En atención | Responsable | El responsable retoma la atención. |
+| Cerrada / Cancelada | — | — | Estados terminales; no admiten nuevas transiciones. |
 
 ### Información relacionada
 
@@ -262,3 +279,17 @@ Origen permitido durante desarrollo:
 ```text
 http://localhost:5173
 ```
+
+## Cierre de incidencias críticas
+
+Una incidencia con severidad de nivel 4 requiere una revisión aprobada por un
+supervisor antes de poder pasar de `Resuelta` a `Cerrada`. La decisión, el
+supervisor, fecha y observación se guardan en `INCIDENCIA_REVISION_SUPERVISOR`
+y también se agregan al historial de la incidencia.
+
+Ejecutar `src/main/resources/database/sqlserver/07-migracion-revision-supervisor.sql`
+en bases de datos existentes antes de desplegar esta funcionalidad.
+
+> Deuda técnica: la evidencia de resolución todavía no es obligatoria en el
+> endpoint de cierre. La tabla y el registro genérico de evidencias existen,
+> pero su validación específica se implementará en una iteración posterior.

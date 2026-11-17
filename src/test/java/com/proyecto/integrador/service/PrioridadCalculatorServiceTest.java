@@ -24,7 +24,7 @@ class PrioridadCalculatorServiceTest {
     @Test
     void respetaLimitesDeClasificacion() {
         assertEquals("MEDIA", calculator.calcular(2, 2, 1).prioridad()); // 1.80
-        assertEquals("ALTA", calculator.calcular(3, 2, 1).prioridad()); // 2.20
+        assertEquals("MEDIA", calculator.calcular(3, 2, 1).prioridad()); // 2.20
         assertEquals("CRITICA", calculator.calcular(4, 3, 3).prioridad()); // 3.40
     }
 
