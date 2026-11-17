@@ -49,8 +49,14 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/auth/seleccionar-rol").authenticated()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        // Temporalmente cualquier usuario autenticado puede gestionar usuarios.
-                        .requestMatchers("/usuario/**").authenticated()
+                        .requestMatchers("/usuario/listar-responsables")
+                        .hasAnyRole(
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
+                        )
+                        .requestMatchers("/usuario/**")
+                        .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/comunes/**")
                         .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.PUT, "/comunes/**")
@@ -113,16 +119,30 @@ public class SecurityConfig {
                         .hasRole(RolEnum.ADMINISTRADOR.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/clasificar")
                         .hasRole(RolEnum.OPERADOR_MESA_CONTROL.getCodigo())
+                        .requestMatchers(HttpMethod.GET, "/incidencias/proximas-a-vencer")
+                        .hasAnyRole(
+                                RolEnum.ADMINISTRADOR.getCodigo(),
+                                RolEnum.OPERADOR_MESA_CONTROL.getCodigo(),
+                                RolEnum.SUPERVISOR.getCodigo()
+                        )
                         .requestMatchers(HttpMethod.POST, "/incidencias/asignar-responsable")
                         .hasRole(RolEnum.OPERADOR_MESA_CONTROL.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/iniciar-atencion")
+                        .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
+                        .requestMatchers(HttpMethod.POST, "/incidencias/poner-en-espera")
+                        .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
+                        .requestMatchers(HttpMethod.POST, "/incidencias/reanudar-atencion")
                         .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/resolver")
                         .hasRole(RolEnum.RESPONSABLE_ATENCION.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/cerrar")
                         .hasRole(RolEnum.SUPERVISOR.getCodigo())
+                        .requestMatchers(HttpMethod.POST, "/incidencias/revision-supervisor")
+                        .hasRole(RolEnum.SUPERVISOR.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/reabrir")
                         .hasRole(RolEnum.SUPERVISOR.getCodigo())
+                        .requestMatchers(HttpMethod.POST, "/incidencias/cancelar")
+                        .hasRole(RolEnum.OPERADOR_MESA_CONTROL.getCodigo())
                         .requestMatchers(HttpMethod.POST, "/incidencias/acciones-correctivas")
                         .hasAnyRole(
                                 RolEnum.ADMINISTRADOR.getCodigo(),

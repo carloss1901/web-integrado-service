@@ -4,6 +4,8 @@ import com.proyecto.integrador.model.entity.IncidenciaEntity;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
 import org.springframework.test.context.ActiveProfiles;
 import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
 import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
@@ -12,7 +14,15 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@DataJpaTest
+@DataJpaTest(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+        "spring.datasource.url=jdbc:h2:mem:incidencias;MODE=MSSQLServer;DB_CLOSE_DELAY=-1",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
+        "spring.datasource.driver-class-name=org.h2.Driver"
+})
+@AutoConfigureTestDatabase(replace = Replace.NONE)
 @ActiveProfiles("test")
 class IncidenciaRepositoryTest {
 
@@ -32,14 +42,22 @@ class IncidenciaRepositoryTest {
                 "Equipo antiguo",
                 false
         );
+        IncidenciaEntity incidenciaDeOtroReportante = crearIncidencia(
+                "INC-JPQL-003",
+                "Equipo de otro reportante",
+                true
+        );
+        incidenciaDeOtroReportante.setIdReportante(2);
 
         incidenciaRepository.save(activa);
         incidenciaRepository.save(inactiva);
+        incidenciaRepository.save(incidenciaDeOtroReportante);
         incidenciaRepository.flush();
 
         List<IncidenciaBusquedaResponse> resultado =
                 incidenciaRepository.buscarResumenPorTitulo(
-                        "EQUIPO"
+                        "EQUIPO",
+                        1
                 );
 
         assertEquals(1, resultado.size());

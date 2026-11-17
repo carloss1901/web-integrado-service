@@ -2,23 +2,30 @@ package com.proyecto.integrador.service.impl;
 
 import com.proyecto.integrador.mapper.GenericMapper;
 import com.proyecto.integrador.model.entity.EstadoIncidenciaEntity;
+import com.proyecto.integrador.model.entity.CategoriaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaAccionCorrectivaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaComentarioEntity;
 import com.proyecto.integrador.model.entity.IncidenciaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaEvidenciaEntity;
 import com.proyecto.integrador.model.entity.IncidenciaHistorialEntity;
+import com.proyecto.integrador.model.entity.IncidenciaRevisionSupervisorEntity;
 import com.proyecto.integrador.model.entity.PrioridadEntity;
+import com.proyecto.integrador.model.entity.SeveridadEntity;
+import com.proyecto.integrador.model.entity.UbicacionEntity;
 import com.proyecto.integrador.model.entity.SlaEntity;
 import com.proyecto.integrador.model.enums.RolEnum;
+import com.proyecto.integrador.model.enums.EstadoIncidenciaEnum;
 import com.proyecto.integrador.model.request.incidencia.ActualizarEstadoIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.ActualizarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.AsignarResponsableRequest;
 import com.proyecto.integrador.model.request.incidencia.ClasificarIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.CambiarEstadoIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarAccionCorrectivaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarComentarioRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarEvidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.RegistrarIncidenciaRequest;
 import com.proyecto.integrador.model.request.incidencia.ReabrirIncidenciaRequest;
+import com.proyecto.integrador.model.request.incidencia.RegistrarRevisionSupervisorRequest;
 import com.proyecto.integrador.model.response.IncidenciaAccionCorrectivaResponse;
 import com.proyecto.integrador.model.response.IncidenciaComentarioResponse;
 import com.proyecto.integrador.model.response.IncidenciaEvidenciaResponse;
@@ -31,6 +38,7 @@ import com.proyecto.integrador.repository.IncidenciaComentarioRepository;
 import com.proyecto.integrador.repository.IncidenciaEvidenciaRepository;
 import com.proyecto.integrador.repository.IncidenciaHistorialRepository;
 import com.proyecto.integrador.repository.IncidenciaRepository;
+import com.proyecto.integrador.repository.IncidenciaRevisionSupervisorRepository;
 import com.proyecto.integrador.repository.PrioridadRepository;
 import com.proyecto.integrador.repository.SeveridadRepository;
 import com.proyecto.integrador.repository.SlaRepository;
@@ -52,6 +60,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import com.proyecto.integrador.model.response.IncidenciaBusquedaResponse;
 import com.proyecto.integrador.model.response.IndicadoresIncidenciaResponse;
+import com.proyecto.integrador.model.response.DashboardIncidenciasResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -70,14 +79,20 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     private static final int ESTADO_CLASIFICADA = 2;
     private static final int ESTADO_ASIGNADA = 3;
     private static final int ESTADO_EN_ATENCION = 4;
+    private static final int ESTADO_EN_ESPERA = 5;
     private static final int ESTADO_RESUELTA = 6;
     private static final int ESTADO_CERRADA = 7;
+    private static final int ESTADO_CANCELADA = 8;
+    private static final int ESTADO_REABIERTA = 9;
 
     @Autowired
     private IncidenciaRepository incidenciaRepository;
 
     @Autowired
     private IncidenciaHistorialRepository incidenciaHistorialRepository;
+
+    @Autowired
+    private IncidenciaRevisionSupervisorRepository incidenciaRevisionSupervisorRepository;
 
     @Autowired
     private IncidenciaEvidenciaRepository incidenciaEvidenciaRepository;
@@ -121,25 +136,36 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Override
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listarIncidencias() {
-        return genericMapper.toResponseList(incidenciaRepository.listarIncidencias(), IncidenciaResponse.class);
+        return completarEstadoRevision(genericMapper.toResponseList(incidenciaRepository.listarIncidencias(), IncidenciaResponse.class));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaResponse> listarIncidenciasPaginadas(Integer idReportante, Integer idResponsable, Integer idSeveridad, Integer idEstado, LocalDate inicio, LocalDate fin, Integer page, Integer size) {
+        if (inicio != null && fin != null && inicio.isAfter(fin)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha inicial no puede ser posterior a la final");
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<IncidenciaEntity> resultado = incidenciaRepository.listarPaginado(idReportante, idResponsable, idSeveridad, idEstado,
+            inicio == null ? null : inicio.atStartOfDay(), fin == null ? null : fin.plusDays(1).atStartOfDay().minusNanos(1), pageable);
+        List<IncidenciaResponse> contenido = resultado.getContent().stream().map(this::mapearIncidenciaPaginada).toList();
+        return new CustomPage<>(new PageImpl<>(contenido, pageable, resultado.getTotalElements()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listarMisIncidenciasAsignadas(Integer idResponsable) {
-        return genericMapper.toResponseList(
+        return completarEstadoRevision(genericMapper.toResponseList(
             incidenciaRepository.listarIncidenciasPorResponsable(idResponsable),
             IncidenciaResponse.class
-        );
+        ));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<IncidenciaResponse> listarMisIncidenciasReportadas(Integer idReportante) {
-        return genericMapper.toResponseList(
+        return completarEstadoRevision(genericMapper.toResponseList(
             incidenciaRepository.listarIncidenciasPorReportante(idReportante),
             IncidenciaResponse.class
-        );
+        ));
     }
 
     @Override
@@ -150,15 +176,32 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional(readOnly = true)
+    public DashboardIncidenciasResponse obtenerDashboardIncidencias(LocalDate inicio, LocalDate fin) {
+        LocalDate fechaInicio = inicio == null ? LocalDate.now().minusDays(30) : inicio;
+        LocalDate fechaFin = fin == null ? LocalDate.now() : fin;
+        if (fechaInicio.isAfter(fechaFin)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La fecha inicial no puede ser posterior a la final");
+        LocalDateTime desde = fechaInicio.atStartOfDay();
+        LocalDateTime hasta = fechaFin.plusDays(1).atStartOfDay().minusNanos(1);
+        Long total = incidenciaRepository.totalPeriodo(desde, hasta);
+        Long dentro = incidenciaRepository.cumplimientoSla(desde, hasta);
+        return new DashboardIncidenciasResponse(total, dentro, Math.max(0, total - dentro),
+            incidenciaRepository.contarPorZona(desde, hasta), incidenciaRepository.contarPorCategoria(desde, hasta),
+            incidenciaRepository.contarPorSeveridad(desde, hasta), incidenciaRepository.cargaActivaResponsables());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<IncidenciaBusquedaResponse> buscarIncidenciasPorTitulo(
-            String texto
+            String texto,
+            Integer idReportante
     ) {
         String textoBusqueda = texto == null
                 ? ""
                 : texto.trim();
 
         return incidenciaRepository.buscarResumenPorTitulo(
-                textoBusqueda
+                textoBusqueda,
+                idReportante
         );
     }
 
@@ -166,7 +209,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Transactional(readOnly = true)
     public List<IncidenciaBusquedaResponse> buscarIncidenciasPorFechas(
             LocalDate inicio,
-            LocalDate fin
+            LocalDate fin,
+            Integer idReportante
     ) {
         if (inicio.isAfter(fin)) {
             throw new ResponseStatusException(
@@ -184,7 +228,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
         return incidenciaRepository.buscarPorRangoFechas(
                 fechaInicio,
-                fechaFin
+                fechaFin,
+                idReportante
         );
     }
 
@@ -194,6 +239,16 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         Pageable pageable = PageRequest.of(page - 1, size);
         return mapearPagina(incidenciaRepository.listarIncidenciasVencidas(pageable),
             pageable, IncidenciaResponse.class);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CustomPage<IncidenciaResponse> listarIncidenciasProximasAVencer(Integer horas, Integer page, Integer size) {
+        int horasConsulta = horas == null ? 24 : Math.min(Math.max(horas, 1), 168);
+        Pageable pageable = PageRequest.of(page - 1, size);
+        LocalDateTime ahora = LocalDateTime.now();
+        return mapearPagina(incidenciaRepository.listarIncidenciasProximasAVencer(
+            ahora, ahora.plusHours(horasConsulta), pageable), pageable, IncidenciaResponse.class);
     }
 
     @Override
@@ -217,10 +272,10 @@ public class IncidenciaServiceImpl implements IncidenciaService {
                         Boolean.TRUE,
                         HttpStatus.OK,
                         "Proceso exitoso",
-                        genericMapper.toResponse(
+                        completarEstadoRevision(genericMapper.toResponse(
                                 projection,
                                 IncidenciaResponse.class
-                        )
+                        ))
                 ))
                 .orElseGet(() -> errorNotFound("La incidencia no existe"));
     }
@@ -272,7 +327,6 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
-
         incidencia.setIdCategoria(request.getIdCategoria());
         incidencia.setIdUbicacion(request.getIdUbicacion());
         incidencia.setTitulo(request.getTitulo());
@@ -318,6 +372,10 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
+        }
+        ResponseEntity<Object> transicionInvalida = validarTransicion(incidencia, ESTADO_CLASIFICADA);
+        if (transicionInvalida != null) {
+            return transicionInvalida;
         }
 
         LocalDateTime ahora = LocalDateTime.now();
@@ -367,6 +425,17 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
+        boolean esPrimeraAsignacion = Integer.valueOf(ESTADO_CLASIFICADA).equals(incidencia.getIdEstado());
+        boolean esReasignacion = Integer.valueOf(ESTADO_ASIGNADA).equals(incidencia.getIdEstado());
+        if (!esPrimeraAsignacion && !esReasignacion) {
+            return error("Solo se puede asignar o reasignar una incidencia clasificada o asignada");
+        }
+        if (esPrimeraAsignacion) {
+            ResponseEntity<Object> transicionInvalida = validarTransicion(incidencia, ESTADO_ASIGNADA);
+            if (transicionInvalida != null) {
+                return transicionInvalida;
+            }
+        }
 
         Integer responsableAnterior = incidencia.getIdResponsable();
         incidencia.setIdResponsable(request.getIdResponsable());
@@ -383,8 +452,9 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     @Override
     @Transactional
     public ResponseEntity<Object> iniciarAtencion(ActualizarEstadoIncidenciaRequest request) {
-        return cambiarEstadoPorResponsable(request, ESTADO_EN_ATENCION, "INICIO_ATENCION",
-            "Inicio de atencion de incidencia", false, false, null);
+        return cambiarEstadoPorResponsable(request.getIdIncidencia(), request.getIdUsuario(),
+            ESTADO_EN_ATENCION, "INICIO_ATENCION", "Inicio de atencion de incidencia", false,
+            null, ESTADO_ASIGNADA);
     }
 
     @Override
@@ -393,8 +463,25 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (request.getDescripcionResolucion() == null || request.getDescripcionResolucion().isBlank()) {
             return error("La descripcion de resolucion es obligatoria");
         }
-        return cambiarEstadoPorResponsable(request, ESTADO_RESUELTA, "RESOLUCION",
-            "Resolucion de incidencia", true, false, request.getDescripcionResolucion().trim());
+        return cambiarEstadoPorResponsable(request.getIdIncidencia(), request.getIdUsuario(),
+            ESTADO_RESUELTA, "RESOLUCION", "Resolucion de incidencia", true,
+            request.getDescripcionResolucion().trim(), ESTADO_EN_ATENCION);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> ponerEnEspera(CambiarEstadoIncidenciaRequest request) {
+        return cambiarEstadoPorResponsable(request.getIdIncidencia(), request.getIdUsuario(),
+            ESTADO_EN_ESPERA, "EN_ESPERA", "Incidencia puesta en espera", false,
+            request.getObservacion().trim(), ESTADO_EN_ATENCION);
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> reanudarAtencion(CambiarEstadoIncidenciaRequest request) {
+        return cambiarEstadoPorResponsable(request.getIdIncidencia(), request.getIdUsuario(),
+            ESTADO_EN_ATENCION, "REANUDACION_ATENCION", "Atencion reanudada", false,
+            request.getObservacion().trim(), ESTADO_EN_ESPERA, ESTADO_REABIERTA);
     }
 
     @Override
@@ -414,12 +501,12 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
-
-        if (!Integer.valueOf(ESTADO_RESUELTA)
-                .equals(incidencia.getIdEstado())) {
-            return error(
-                    "Solo se puede cerrar una incidencia resuelta"
-            );
+        ResponseEntity<Object> transicionInvalida = validarTransicion(incidencia, ESTADO_CERRADA);
+        if (transicionInvalida != null) {
+            return transicionInvalida;
+        }
+        if (esCritica(incidencia) && !tieneRevisionSupervisorAprobada(incidencia.getIdIncidencia())) {
+            return error("La incidencia critica requiere una revision aprobada por supervisor antes del cierre");
         }
 
         String estadoAnterior = valor(incidencia.getIdEstado());
@@ -450,6 +537,40 @@ public class IncidenciaServiceImpl implements IncidenciaService {
 
     @Override
     @Transactional
+    public ResponseEntity<Object> registrarRevisionSupervisor(RegistrarRevisionSupervisorRequest request) {
+        if (!tieneRol(request.getIdUsuario(), ROL_SUPERVISOR)) {
+            return errorForbidden("Solo un supervisor puede registrar la revision");
+        }
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+        if (!esCritica(incidencia)) {
+            return error("La revision de supervisor solo aplica a incidencias criticas");
+        }
+        if (!Integer.valueOf(ESTADO_RESUELTA).equals(incidencia.getIdEstado())) {
+            return error("La incidencia critica debe estar resuelta antes de su revision");
+        }
+
+        IncidenciaRevisionSupervisorEntity revision = new IncidenciaRevisionSupervisorEntity();
+        revision.setIdIncidencia(incidencia.getIdIncidencia());
+        revision.setIdSupervisor(request.getIdUsuario());
+        revision.setAprobada(request.getAprobada());
+        revision.setObservacion(request.getObservacion().trim());
+        revision.setFechaRevision(LocalDateTime.now());
+        revision.setActivo(Boolean.TRUE);
+        incidenciaRevisionSupervisorRepository.save(revision);
+
+        registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "REVISION_SUPERVISOR",
+            null, request.getAprobada().toString(), "Revision " + (request.getAprobada() ? "aprobada" : "rechazada")
+                + " por supervisor: " + request.getObservacion().trim());
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK,
+            request.getAprobada() ? "Revision aprobada correctamente" : "Revision rechazada correctamente");
+    }
+
+    @Override
+    @Transactional
     public ResponseEntity<Object> reabrirIncidencia(ReabrirIncidenciaRequest request) {
         if (!tieneRol(request.getIdUsuario(), ROL_SUPERVISOR)) {
             return errorForbidden("Solo un supervisor puede reabrir incidencias");
@@ -459,12 +580,13 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
-        if (!Integer.valueOf(ESTADO_RESUELTA).equals(incidencia.getIdEstado())) {
-            return error("Solo se puede reabrir una incidencia resuelta");
+        ResponseEntity<Object> transicionInvalida = validarTransicion(incidencia, ESTADO_REABIERTA);
+        if (transicionInvalida != null) {
+            return transicionInvalida;
         }
 
         String estadoAnterior = valor(incidencia.getIdEstado());
-        incidencia.setIdEstado(obtenerEstado(ESTADO_EN_ATENCION).getIdEstado());
+        incidencia.setIdEstado(obtenerEstado(ESTADO_REABIERTA).getIdEstado());
         incidencia.setFechaResolucion(null);
         incidencia.setFecMod(LocalDateTime.now());
         incidenciaRepository.save(incidencia);
@@ -473,6 +595,32 @@ public class IncidenciaServiceImpl implements IncidenciaService {
             estadoAnterior, incidencia.getIdEstado().toString(), request.getObservacion().trim());
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia reabierta correctamente");
+    }
+
+    @Override
+    @Transactional
+    public ResponseEntity<Object> cancelarIncidencia(CambiarEstadoIncidenciaRequest request) {
+        if (!tieneRol(request.getIdUsuario(), ROL_OPERADOR)) {
+            return errorForbidden("Solo un operador puede cancelar incidencias");
+        }
+
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        if (incidencia == null) {
+            return errorNotFound("La incidencia no existe");
+        }
+        ResponseEntity<Object> transicionInvalida = validarTransicion(incidencia, ESTADO_CANCELADA);
+        if (transicionInvalida != null) {
+            return transicionInvalida;
+        }
+
+        String estadoAnterior = valor(incidencia.getIdEstado());
+        incidencia.setIdEstado(obtenerEstado(ESTADO_CANCELADA).getIdEstado());
+        incidencia.setFecMod(LocalDateTime.now());
+        incidenciaRepository.save(incidencia);
+        registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), "CANCELACION",
+            estadoAnterior, incidencia.getIdEstado().toString(), request.getObservacion().trim());
+
+        return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, "Incidencia cancelada correctamente");
     }
 
     @Override
@@ -674,24 +822,39 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     }
 
     private ResponseEntity<Object> cambiarEstadoPorResponsable(
-        ActualizarEstadoIncidenciaRequest request,
+        Integer idIncidencia,
+        Integer idUsuario,
         int estadoNuevo,
         String tipoEvento,
         String descripcion,
         boolean registrarResolucion,
-        boolean registrarCierre,
-        String descripcionAccionCorrectiva
+        String observacion,
+        int... estadosOrigenPermitidos
     ) {
-        if (!tieneRol(request.getIdUsuario(), ROL_RESPONSABLE)) {
+        if (!tieneRol(idUsuario, ROL_RESPONSABLE)) {
             return error("El usuario no tiene rol RESPONSABLE_ATENCION");
         }
 
-        IncidenciaEntity incidencia = obtenerIncidenciaActiva(request.getIdIncidencia());
+        IncidenciaEntity incidencia = obtenerIncidenciaActiva(idIncidencia);
         if (incidencia == null) {
             return errorNotFound("La incidencia no existe");
         }
-        if (!request.getIdUsuario().equals(incidencia.getIdResponsable())) {
+        if (!idUsuario.equals(incidencia.getIdResponsable())) {
             return error("La incidencia no esta asignada al usuario indicado");
+        }
+        boolean estadoOrigenPermitido = false;
+        for (int estadoOrigen : estadosOrigenPermitidos) {
+            if (Integer.valueOf(estadoOrigen).equals(incidencia.getIdEstado())) {
+                estadoOrigenPermitido = true;
+                break;
+            }
+        }
+        if (!estadoOrigenPermitido) {
+            return error("La accion no esta permitida para el estado actual de la incidencia");
+        }
+        ResponseEntity<Object> transicionInvalida = validarTransicion(incidencia, estadoNuevo);
+        if (transicionInvalida != null) {
+            return transicionInvalida;
         }
 
         String estadoAnterior = valor(incidencia.getIdEstado());
@@ -699,28 +862,34 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         if (registrarResolucion) {
             incidencia.setFechaResolucion(LocalDateTime.now());
         }
-        if (registrarCierre) {
-            incidencia.setFechaCierre(LocalDateTime.now());
-        }
         incidencia.setFecMod(LocalDateTime.now());
         incidenciaRepository.save(incidencia);
 
-        if (descripcionAccionCorrectiva != null) {
+        if (observacion != null) {
             IncidenciaAccionCorrectivaEntity accion = new IncidenciaAccionCorrectivaEntity();
             accion.setIdIncidencia(incidencia.getIdIncidencia());
-            accion.setIdUsuario(request.getIdUsuario());
-            accion.setDescripcion(descripcionAccionCorrectiva);
+            accion.setIdUsuario(idUsuario);
+            accion.setDescripcion(observacion);
             accion.setFechaRegistro(LocalDateTime.now());
             accion.setActivo(Boolean.TRUE);
             incidenciaAccionCorrectivaRepository.save(accion);
         }
 
-        registrarHistorial(incidencia.getIdIncidencia(), request.getIdUsuario(), tipoEvento,
-            estadoAnterior, incidencia.getIdEstado().toString(), descripcionAccionCorrectiva == null
+        registrarHistorial(incidencia.getIdIncidencia(), idUsuario, tipoEvento,
+            estadoAnterior, incidencia.getIdEstado().toString(), observacion == null
                 ? descripcion
-                : descripcion + ": " + descripcionAccionCorrectiva);
+                : descripcion + ": " + observacion);
 
         return MessageResponse.setResponse(Boolean.TRUE, HttpStatus.OK, descripcion);
+    }
+
+    private ResponseEntity<Object> validarTransicion(IncidenciaEntity incidencia, int estadoDestinoId) {
+        EstadoIncidenciaEnum estadoActual = EstadoIncidenciaEnum.fromId(incidencia.getIdEstado());
+        EstadoIncidenciaEnum estadoDestino = EstadoIncidenciaEnum.fromId(estadoDestinoId);
+        if (estadoActual == null || estadoDestino == null || !estadoActual.permiteTransicionA(estadoDestino)) {
+            return error("La transicion de estado solicitada no esta permitida");
+        }
+        return null;
     }
 
     private void validarAccesoConsulta(
@@ -780,6 +949,32 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         return idUsuario != null && usuarioRepository.countUsuarioByRolId(idUsuario, idRol) > 0;
     }
 
+    private boolean esCritica(IncidenciaEntity incidencia) {
+        if (incidencia.getIdSeveridad() == null) {
+            return false;
+        }
+        return severidadRepository.findById(incidencia.getIdSeveridad())
+            .map(severidad -> severidad.getNivel() != null && severidad.getNivel() >= 4)
+            .orElse(false);
+    }
+
+    private boolean tieneRevisionSupervisorAprobada(Integer idIncidencia) {
+        return incidenciaRevisionSupervisorRepository
+            .findTopByIdIncidenciaAndActivoTrueOrderByFechaRevisionDesc(idIncidencia)
+            .map(revision -> Boolean.TRUE.equals(revision.getAprobada()))
+            .orElse(false);
+    }
+
+    private IncidenciaResponse completarEstadoRevision(IncidenciaResponse incidencia) {
+        incidencia.setRevisionSupervisorAprobada(tieneRevisionSupervisorAprobada(incidencia.getIdIncidencia()));
+        return incidencia;
+    }
+
+    private List<IncidenciaResponse> completarEstadoRevision(List<IncidenciaResponse> incidencias) {
+        incidencias.forEach(this::completarEstadoRevision);
+        return incidencias;
+    }
+
     private IncidenciaEntity obtenerIncidenciaActiva(Integer idIncidencia) {
         if (idIncidencia == null) {
             return null;
@@ -787,6 +982,55 @@ public class IncidenciaServiceImpl implements IncidenciaService {
         return incidenciaRepository.findById(idIncidencia)
             .filter(incidencia -> Boolean.TRUE.equals(incidencia.getActivo()))
             .orElse(null);
+    }
+
+    private IncidenciaResponse mapearIncidenciaPaginada(IncidenciaEntity item) {
+        IncidenciaResponse response = new IncidenciaResponse();
+        response.setIdIncidencia(item.getIdIncidencia()); response.setCodigo(item.getCodigo()); response.setTitulo(item.getTitulo());
+        response.setReportante(nombreUsuario(item.getIdReportante()));
+        response.setResponsable(nombreUsuario(item.getIdResponsable()));
+        response.setCategoria(nombreCategoria(item.getIdCategoria()));
+        response.setUbicacion(nombreUbicacion(item.getIdUbicacion()));
+        response.setSeveridad(nombreSeveridad(item.getIdSeveridad()));
+        response.setPrioridad(nombrePrioridad(item.getIdPrioridad()));
+        response.setDescripcion(item.getDescripcion());
+        response.setFechaRegistro(item.getFechaRegistro() == null ? null : item.getFechaRegistro().toString());
+        response.setFechaLimite(item.getFechaLimite() == null ? null : item.getFechaLimite().toString());
+        response.setFechaResolucion(item.getFechaResolucion() == null ? null : item.getFechaResolucion().toString());
+        response.setFechaCierre(item.getFechaCierre() == null ? null : item.getFechaCierre().toString());
+        response.setImpacto(item.getImpacto()); response.setUrgencia(item.getUrgencia()); response.setReincidencia(item.getReincidencia());
+        response.setPuntuacionPrioridad(item.getPuntajePrioridad()); response.setEstado(obtenerEstado(item.getIdEstado()).getNombre());
+        response.setRevisionSupervisorAprobada(tieneRevisionSupervisorAprobada(item.getIdIncidencia()));
+        return response;
+    }
+
+    private String nombreUsuario(Integer idUsuario) {
+        if (idUsuario == null) {
+            return null;
+        }
+        return usuarioRepository.findById(idUsuario)
+            .map(usuario -> String.join(" ", java.util.stream.Stream.of(
+                    usuario.getNombres(), usuario.getApePaterno(), usuario.getApeMaterno())
+                .filter(java.util.Objects::nonNull)
+                .filter(nombre -> !nombre.isBlank())
+                .toList()))
+            .orElse(null);
+    }
+
+    private String nombreCategoria(Integer idCategoria) {
+        return idCategoria == null ? null : categoriaRepository.findById(idCategoria).map(CategoriaEntity::getNombre).orElse(null);
+    }
+
+    private String nombreUbicacion(Integer idUbicacion) {
+        return idUbicacion == null ? null : ubicacionRepository.findById(idUbicacion).map(UbicacionEntity::getNombre).orElse(null);
+    }
+
+    private String nombreSeveridad(Integer idSeveridad) {
+        return idSeveridad == null ? null : severidadRepository.findById(idSeveridad).map(SeveridadEntity::getNombre).orElse(null);
+    }
+
+    private String nombrePrioridad(Integer idPrioridad) {
+        return idPrioridad == null ? null : prioridadRepository.findById(idPrioridad).map(PrioridadEntity::getNombre).orElse(null);
     }
 
     private EstadoIncidenciaEntity obtenerEstado(int idEstado) {

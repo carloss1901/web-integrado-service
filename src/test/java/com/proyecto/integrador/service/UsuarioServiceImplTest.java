@@ -45,7 +45,7 @@ class UsuarioServiceImplTest {
         RegistrarUsuarioRequest request = new RegistrarUsuarioRequest();
         request.setUsuario("jperez");
         request.setNombres("Juan");
-        request.setApellidos("Perez");
+        request.setApePaterno("Perez");
         request.setCorreo("jperez@demo.com");
         request.setPassword("123456");
         request.setIdsRoles(List.of(4));
@@ -53,7 +53,7 @@ class UsuarioServiceImplTest {
         when(usuarioRepository.existsByUsuarioIgnoreCase("jperez")).thenReturn(false);
         when(usuarioRepository.existsByCorreoIgnoreCase("jperez@demo.com")).thenReturn(false);
         when(rolRepository.existsById(4)).thenReturn(true);
-        when(passwordEncoder.encode("123456"))
+        when(passwordEncoder.encode("campus360"))
                 .thenReturn("$2a$10$passwordCodificadoParaPrueba");
         when(usuarioRepository.save(any(UsuarioEntity.class))).thenAnswer(invocation -> {
             UsuarioEntity usuario = invocation.getArgument(0);
@@ -73,7 +73,7 @@ class UsuarioServiceImplTest {
         ActualizarUsuarioRequest request = new ActualizarUsuarioRequest();
         request.setIdUsuario(1);
         request.setNombres("Juan");
-        request.setApellidos("Perez");
+        request.setApePaterno("Perez");
         request.setCorreo("jperez@demo.com");
         request.setIdsRoles(List.of(2, 4));
 
@@ -92,7 +92,7 @@ class UsuarioServiceImplTest {
 
         assertEquals(200, response.getStatusCode().value());
         verify(usuarioRepository).save(usuario);
-        verify(usuarioRolRepository).deleteByIdUsuario(1);
+        verify(usuarioRolRepository).saveAll(any());
         verify(usuarioRolRepository, org.mockito.Mockito.times(2)).save(any());
     }
 }

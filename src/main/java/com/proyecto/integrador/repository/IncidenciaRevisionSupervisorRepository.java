@@ -1,0 +1,11 @@
+package com.proyecto.integrador.repository;
+
+import com.proyecto.integrador.model.entity.IncidenciaRevisionSupervisorEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface IncidenciaRevisionSupervisorRepository extends JpaRepository<IncidenciaRevisionSupervisorEntity, Integer> {
+    Optional<IncidenciaRevisionSupervisorEntity> findTopByIdIncidenciaAndActivoTrueOrderByFechaRevisionDesc(Integer idIncidencia);
+}

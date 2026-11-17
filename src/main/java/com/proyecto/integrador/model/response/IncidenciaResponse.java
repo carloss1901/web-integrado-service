@@ -27,4 +27,5 @@ public class IncidenciaResponse {
     private String fechaLimite;
     private String fechaResolucion;
     private String fechaCierre;
+    private Boolean revisionSupervisorAprobada;
 }
